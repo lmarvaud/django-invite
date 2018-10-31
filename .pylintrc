@@ -417,7 +417,8 @@ good-names=i,
            ex,
            Run,
            _,
-	   urlpatterns
+           urlpatterns,
+           default_app_config
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no
