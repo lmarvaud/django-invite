@@ -1,39 +1,14 @@
 """
 Data models configurations of django-invite project
 """
-from operator import attrgetter
-
 from django.db import models
 from django.db.models import Sum
-from django.utils.translation import gettext_lazy as _
-from django.utils.functional import cached_property
 from django.template.defaultfilters import capfirst
+from django.utils.functional import cached_property
+
+from .join_and import join_and
 
 __all__ = ["Family", "Guest", "Accompany"]
-
-
-def join_and(queryset):
-    """
-    Create a "," and "and" sentence from Invite or Accompany list
-
-    :param queryset: a queryset with a list of Invite or Accompany
-    :return: the list of name join by "," and "and"
-
-    for example,
-    ```
-    join_and([Invite(name="Jean"), Invite(name="Paul"), Invite(name="Marie")])
-    ```
-    would return : "Jean, Paul and Marie"
-    (where " and " is localized)
-    """
-    listed = list(map(str, map(attrgetter('name'), queryset)))
-    if not listed:
-        return ''
-    if len(listed) == 1:
-        return listed[0]
-    if len(listed) == 2:
-        return listed[0] + str(_(' and ')) + listed[1]
-    return ', '.join(listed[:-1]) + str(_(' and ')) + listed[-1]
 
 
 class Family(models.Model):
@@ -60,15 +35,16 @@ class Family(models.Model):
         """
         many = self.guests.count() > 1
         is_female = self.guests.exclude(female=True).count() > 0
-        guests = join_and(self.guests.all())
-        accompanies = join_and(self.accompanies.all())
+        guests = join_and(list(self.guests.values_list("name", flat=True)))
+        accompanies = join_and(list(self.accompanies.values_list("name", flat=True)))
         accompanies_number = self.accompanies.aggregate(Sum("number"))
         accompanies_number = accompanies_number["number__sum"] or 0
         has_accompany = accompanies_number >= 1
         has_accompanies = accompanies_number > 1
         context = {
             "family": self,
-            "full": join_and(list(self.guests.all()) + list(self.accompanies.all())),
+            "full": join_and(list(self.guests.values_list("name", flat=True)) +
+                             list(self.accompanies.values_list("name", flat=True))),
             "prenom": guests,
             "Françoise": guests,
             "invités": guests,
