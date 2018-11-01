@@ -5,6 +5,7 @@ from django.db import models
 from django.db.models import Sum
 from django.template.defaultfilters import capfirst
 from django.utils.functional import cached_property
+from django.utils.translation import gettext_lazy as _
 
 from .join_and import join_and
 
@@ -23,10 +24,11 @@ class Family(models.Model):
     """
     objects = models.Manager()
 
-    invited_midday = models.BooleanField(default=False)
-    invited_afternoon = models.BooleanField(default=False)
-    invited_evening = models.BooleanField(default=True)
-    host = models.CharField(max_length=32)
+    invited_midday = models.BooleanField(verbose_name=_("is invite on lunch"), default=False)
+    invited_afternoon = models.BooleanField(verbose_name=_("is invite the afternoon"),
+                                            default=False)
+    invited_evening = models.BooleanField(verbose_name=_("is invite at the party"), default=True)
+    host = models.CharField(verbose_name=_("principal host"), max_length=32)
 
     @cached_property
     def context(self):
@@ -66,7 +68,7 @@ class Family(models.Model):
         return context
 
     def __str__(self):
-        return "{:full} family".format(self)
+        return str(_("{:full} family")).format(self)
 
     def __format__(self, format_spec):
         """
@@ -82,8 +84,8 @@ class Family(models.Model):
         return ('{%s}' % format_spec).format(**self.context)
 
     class Meta:
-        verbose_name = "Family"
-        verbose_name_plural = "Families"
+        verbose_name = _("family")
+        verbose_name_plural = _("families")
 
 
 class Guest(models.Model):
@@ -92,11 +94,18 @@ class Guest(models.Model):
 
     A personalized email will be send to him/her/them
     """
-    family = models.ForeignKey(Family, models.CASCADE, "guests", null=False)
-    female = models.BooleanField(default=False)
-    name = models.CharField(max_length=64)
-    email = models.EmailField()
-    phone = models.CharField(max_length=20, blank=True, default="")
+    family = models.ForeignKey(Family, models.CASCADE, "guests", verbose_name=_("family"),
+                               null=False)
+    female = models.BooleanField(verbose_name=_("is a female"), default=False)
+    name = models.CharField(verbose_name=_("name"), max_length=64)
+    email = models.EmailField(verbose_name=_("email address"))
+    phone = models.CharField(verbose_name=_("phone number"), max_length=20, blank=True, default="")
+
+    def __str__(self):
+        return "{name} <{email}>".format(name=self.name, email=self.email)
+
+    class Meta:
+        verbose_name = _("Guest")
 
 
 class Accompany(models.Model):
@@ -105,6 +114,13 @@ class Accompany(models.Model):
 
     `number` field permit to join accompanies in on field, for "your children" for example
     """
-    family = models.ForeignKey(Family, models.CASCADE, "accompanies", null=False)
-    name = models.CharField(max_length=64)
-    number = models.IntegerField(default=1)
+    family = models.ForeignKey(Family, models.CASCADE, "accompanies", verbose_name=_("family"),
+                               null=False)
+    name = models.CharField(verbose_name=_("name"), max_length=64)
+    number = models.IntegerField(verbose_name=_("number of person"), default=1)
+
+    def __str__(self):
+        return "{name}".format(name=self.name)
+
+    class Meta:
+        verbose_name = _("accompany")
