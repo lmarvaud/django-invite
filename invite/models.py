@@ -6,6 +6,8 @@ from operator import attrgetter
 from django.db import models
 from django.db.models import Sum
 from django.utils.translation import gettext_lazy as _
+from django.utils.functional import cached_property
+from django.template.defaultfilters import capfirst
 
 __all__ = ["Family", "Invite", "Accompany"]
 
@@ -50,27 +52,57 @@ class Family(models.Model):
     invited_afternoon = models.BooleanField(default=False)
     invited_evening = models.BooleanField(default=True)
 
-    @property
+    @cached_property
     def context(self):
         """
         Create a template context for french language
         """
         many = self.invites.count() > 1
-        female = self.invites.exclude(female=True).count() > 0
-        number = self.accompanies.aggregate(Sum("number"))
-        number = number["number__sum"]
-        has_accompanies = number > 1
-        has_accompany = number >= 1
-        return {
-            "prenom": join_and(self.invites.all()),
+        is_female = self.invites.exclude(female=True).count() > 0
+        guests = join_and(self.invites.all())
+        accompanies = join_and(self.accompanies.all())
+        accompanies_number = self.accompanies.aggregate(Sum("number"))
+        accompanies_number = accompanies_number["number__sum"] or 0
+        has_accompany = accompanies_number >= 1
+        has_accompanies = accompanies_number > 1
+        context = {
+            "family": self,
+            "full": join_and(list(self.invites.all()) + list(self.accompanies.all())),
+            "prenom": guests,
+            "Françoise": guests,
+            "invités": guests,
             "has_accompanies": has_accompanies,
             "has_accompany": has_accompany,
             "tu": "tu" if not many else "vous",
             "vas": "vas" if not many else "allez",
             "es": "es" if not many else "êtes",
-            "e": ("e" if female else "") + ("s" if many else ""),
-            "avec": "avec "
+            "sais": "sais" if not  many else "savez",
+            "e": ("e" if is_female else "") + ("s" if many else ""),
+            "avec": "avec" if has_accompany else "",
+            "accompagnant": accompanies if has_accompany else "",
+            "Marie": accompanies if has_accompany else "",
+            "est": "sont" if has_accompanies else ("est" if has_accompany else ""),
         }
+        for key in list(context.keys()):
+            if isinstance(context[key], str):
+                context.setdefault(capfirst(key), capfirst(context[key]))
+        return context
+
+    def __str__(self):
+        return "{:full} family".format(self)
+
+    def __format__(self, format_spec):
+        """
+        acceptable format_spec are [guests, accompanies, full]
+
+
+        :param format_spec:
+        :return:
+        """
+
+        if format_spec not in self.context:
+            raise ValueError("Invalid format specifier")
+        return ('{%s}' % format_spec).format(**self.context)
 
     class Meta:
         verbose_name = "Family"
