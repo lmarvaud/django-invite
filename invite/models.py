@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.functional import cached_property
 from django.template.defaultfilters import capfirst
 
-__all__ = ["Family", "Invite", "Accompany"]
+__all__ = ["Family", "Guest", "Accompany"]
 
 
 def join_and(queryset):
@@ -58,9 +58,9 @@ class Family(models.Model):
         """
         Create a template context for french language
         """
-        many = self.invites.count() > 1
-        is_female = self.invites.exclude(female=True).count() > 0
-        guests = join_and(self.invites.all())
+        many = self.guests.count() > 1
+        is_female = self.guests.exclude(female=True).count() > 0
+        guests = join_and(self.guests.all())
         accompanies = join_and(self.accompanies.all())
         accompanies_number = self.accompanies.aggregate(Sum("number"))
         accompanies_number = accompanies_number["number__sum"] or 0
@@ -68,7 +68,7 @@ class Family(models.Model):
         has_accompanies = accompanies_number > 1
         context = {
             "family": self,
-            "full": join_and(list(self.invites.all()) + list(self.accompanies.all())),
+            "full": join_and(list(self.guests.all()) + list(self.accompanies.all())),
             "prenom": guests,
             "Françoise": guests,
             "invités": guests,
@@ -110,13 +110,13 @@ class Family(models.Model):
         verbose_name_plural = "Families"
 
 
-class Invite(models.Model):
+class Guest(models.Model):
     """
     Guest of the event
 
     A personalized email will be send to him/her/them
     """
-    family = models.ForeignKey(Family, models.CASCADE, "invites", null=False)
+    family = models.ForeignKey(Family, models.CASCADE, "guests", null=False)
     female = models.BooleanField(default=False)
     name = models.CharField(max_length=64)
     email = models.EmailField()

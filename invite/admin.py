@@ -2,14 +2,14 @@
 Admin configurations for django-invite project
 """
 from django.contrib import admin
-from .models import Family, Invite, Accompany
+from .models import Family, Guest, Accompany
 
 
 class InviteInline(admin.TabularInline):
     """
     Family guest admin view
     """
-    model = Invite
+    model = Guest
 
 
 class AccompanyInline(admin.TabularInline):
