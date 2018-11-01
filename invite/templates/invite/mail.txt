@@ -3,11 +3,11 @@ Salut {{Françoise}},
 
 Comment {{vas}} {{tu}} ?
 
-Comme {{tu}} le {{sais}} déjà, avec Jean, nous allons nous PACSer !
+Comme {{tu}} le {{sais}} déjà, {%if family.host == "Marie"%}avec Jean, {%elif family.host == "Jean"%}avec Marie, {%endif%}nous allons nous marier !
 
-Pour ce fêter ça, {{tu}} {{es}} convié{{e}} {{avec}} {{Marie}}, samedi 1er Juin à Paris pour {% if family.invited_midday %}un déjeuner en famille{% if family.invited_afternoon %}, {%elif family.invited_evening%} et {%else%}.{%endif%}{%endif%}{% if family.invited_afternoon %}un après-midi melting pote{%if family.invited_evening%} et {%else%} !{%endif%}{%endif%}{% if family.invited_evening %}une soirée d'enfer !{%endif%}
+Pour fêter ça, {{tu}} {{es}} convié{{e}}{% if Marie %} avec {{Marie}}{% endif %}, <b>samedi 1er Juin</b> à Paris pour{% if family.invited_midday %}un déjeuner en famille{% if family.invited_afternoon %}, {%elif family.invited_evening%} et {%else%}.{%endif%}{%endif%}{% if family.invited_afternoon %}une après-midi melting pote{%if family.invited_evening%} et {%else%} !{%endif%}{%endif%}{% if family.invited_evening %}une soirée d'enfer !{%endif%}<br>
 
 Save the date !
 
 
-Marie
+{{family.host}}

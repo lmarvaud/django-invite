@@ -51,6 +51,7 @@ class Family(models.Model):
     invited_midday = models.BooleanField(default=False)
     invited_afternoon = models.BooleanField(default=False)
     invited_evening = models.BooleanField(default=True)
+    host = models.CharField(max_length=32)
 
     @cached_property
     def context(self):

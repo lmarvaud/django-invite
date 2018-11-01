@@ -3,9 +3,9 @@ Salut {{Françoise}},<br>
 <br>
 Comment {{vas}} {{tu}} ?<br>
 <br>
-Comme {{tu}} le {{sais}} déjà, avec Jean, nous allons nous PACSer !<br>
+Comme {{tu}} le {{sais}} déjà, {%if family.host == "Marie"%}avec Jean, {%elif family.host == "Jean"%}avec Marie, {%endif%}nous allons nous marier !<br>
 <br>
-Pour ce fêter ça, {{tu}} {{es}} convié{{e}}{% if Marie %} avec {{Marie}}{% endif %}, <b>samedi 1er Juin</b> à Paris pour
+Pour fêter ça, {{tu}} {{es}} convié{{e}}{% if Marie %} avec {{Marie}}{% endif %}, <b>samedi 1er Juin</b> à Paris pour
 {% if family.invited_midday %}un déjeuner en famille{% if family.invited_afternoon %}, {%elif family.invited_evening%} et {%else%}.{%endif%}{%endif%}
 {% if family.invited_afternoon %}une après-midi melting pote{%if family.invited_evening%} et {%else%} !{%endif%}{%endif%}
 {% if family.invited_evening %}une soirée d'enfer !{%endif%}<br>
@@ -13,4 +13,4 @@ Pour ce fêter ça, {{tu}} {{es}} convié{{e}}{% if Marie %} avec {{Marie}}{% en
 <b>Save the date !</b><br>
 <br>
 <br>
-Marie
+{{family.host}}<br>
