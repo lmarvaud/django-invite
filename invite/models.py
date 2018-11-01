@@ -119,7 +119,7 @@ class Invite(models.Model):
     female = models.BooleanField(default=False)
     name = models.CharField(max_length=64)
     email = models.EmailField()
-    phone = models.CharField(max_length=20)
+    phone = models.CharField(max_length=20, blank=True, default="")
 
 
 class Accompany(models.Model):
