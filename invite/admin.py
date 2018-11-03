@@ -42,7 +42,10 @@ def mail(unused_model_admin, unused_request, families):
             if settings.__dict__.get("INVITE_USE_HOST_IN_FROM_EMAIL", False) and
             family.host in settings.INVITE_HOSTS
             else None,
-            family.guests.values_list("email", flat=True)
+            (
+                "{} <{}>".format(*values)
+                for values in family.guests.values_list("name", "email")
+            )
         )
         for family in families
     )
