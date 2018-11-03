@@ -58,6 +58,8 @@ Existing variables are :
 ============================== ============================================
 Template variables             Description
 ============================== ============================================
+**Family**
+---------------------------------------------------------------------------
 ``{family}``                   A family object containing next arguments
 ``{family.invited_midday}``    Boolean to invite the members on the 1st part of the event
 ``{family.invited_afternoon}`` Boolean to invite the members on the 2nd part of the event
@@ -65,21 +67,21 @@ Template variables             Description
 ``{family.host}``              The person that host the family
 ``{family.guests}``            The guest list
 ``{family.accompanies}``       The accompany list
-``{full}``                     Names of all the members name
-``{prenom}``                   Names of the guests
-``{Françoise}``                Names of the guests
-``{invités}``                  Names of the guests
+**Members**
+---------------------------------------------------------------------------
+``{all}``                      Names of all the members name
+``{count}``                    Number of members
+**Guests**
+---------------------------------------------------------------------------
+``{guests}``                   Names of the guests
+``{guests_count}``             Number of guests
+``{e}``                        "" or "*e*" or "*s*" or "*es*" if there is one male, one female, many male (and/or female) or many female
+**Accompanies**
+---------------------------------------------------------------------------
+``{accompanies}``              Names of the accompanies
+``{accompanies_count}``        Number of accompanies
 ``{has_accompanies}``          Boolean wether there is many accompanies or not
 ``{has_accompany}``            Boolean wether there is any accompanies or none
-``{tu}``                       "*tu*" or "*vous*" if there is many guests
-``{vas}``                      "*vas*" or "*allez*" if there is many guests
-``{es}``                       "*es*" or "*êtes*" if there is many guests
-``{sais}``                     "*sais*" or "*savez*" if there is many guests
-``{e}``                        "" or "*e*" or "*s*" or "*es*" if there is one male, one female, many male (and/or female) or many female
-``{avec}``                     "*avec* " or "" if there is no accompanies
-``{accompagnant}``             Names of the accompanies
-``{Marie}``                    Names of the accompanies
-``{est}``                      "*est*" or "*sont*" if there is many accompanies
 ============================== ============================================
 
 `importguests` command

@@ -1,11 +1,11 @@
-Salut {{Françoise}},<br>
+Salut {{guests}},<br>
 <br>
 <br>
-Comment {{vas}} {{tu}} ?<br>
+Comment {{guests_count | pluralize:"vas tu,allez vous"}} ?<br>
 <br>
-Comme {{tu}} le {{sais}} déjà, {%if family.host == "Marie"%}avec Jean, {%elif family.host == "Jean"%}avec Marie, {%endif%}nous allons nous marier !<br>
+Comme {{guests_count | pluralize:"tu le sais,vous le savez"}} déjà, {%if family.host == "Marie"%}avec Jean, {%elif family.host == "Jean"%}avec Marie, {%endif%}nous allons nous marier !<br>
 <br>
-Pour fêter ça, {{tu}} {{es}} convié{{e}}{% if Marie %} avec {{Marie}}{% endif %}, <b>samedi 1er Juin</b> à Paris pour
+Pour fêter ça, {{guests_count | pluralize:"tu es,vous êtes"}} convié{{e}}{% if has_accompany %} avec {{accompanies}}{% endif %}, <b>samedi 1er Juin</b> à Paris pour
 {% if family.invited_midday %}un déjeuner en famille{% if family.invited_afternoon %}, {%elif family.invited_evening%} et {%else%}.{%endif%}{%endif%}
 {% if family.invited_afternoon %}une après-midi melting pote{%if family.invited_evening%} et {%else%} !{%endif%}{%endif%}
 {% if family.invited_evening %}une soirée d'enfer !{%endif%}<br>

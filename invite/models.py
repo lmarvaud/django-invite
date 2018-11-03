@@ -35,32 +35,27 @@ class Family(models.Model):
         """
         Create a template context for french language
         """
-        many = self.guests.count() > 1
-        is_female = self.guests.exclude(female=True).count() > 0
+        guests_count = self.guests.count()
+        is_female = self.guests.exclude(female=True).count() == 0
         guests = join_and(list(self.guests.values_list("name", flat=True)))
         accompanies = join_and(list(self.accompanies.values_list("name", flat=True)))
-        accompanies_number = self.accompanies.aggregate(Sum("number"))
-        accompanies_number = accompanies_number["number__sum"] or 0
-        has_accompany = accompanies_number >= 1
-        has_accompanies = accompanies_number > 1
+        accompanies_count = self.accompanies.aggregate(Sum("number"))
+        accompanies_count = accompanies_count["number__sum"] or 0
+        has_accompany = accompanies_count >= 1
+        has_accompanies = accompanies_count > 1
         context = {
             "family": self,
-            "full": join_and(list(self.guests.values_list("name", flat=True)) +
-                             list(self.accompanies.values_list("name", flat=True))),
-            "prenom": guests,
-            "Françoise": guests,
-            "invités": guests,
+            "all": join_and(list(self.guests.values_list("name", flat=True)) +
+                            list(self.accompanies.values_list("name", flat=True))),
+            "count": guests_count + accompanies_count,
+            "accompanies": accompanies if accompanies_count else "",
+            "accompanies_count": accompanies_count,
+            "e": ("e" if is_female else ""),
+            "guests": guests,
+            "guests_count": guests_count,
             "has_accompanies": has_accompanies,
             "has_accompany": has_accompany,
-            "tu": "tu" if not many else "vous",
-            "vas": "vas" if not many else "allez",
-            "es": "es" if not many else "êtes",
-            "sais": "sais" if not  many else "savez",
-            "e": ("e" if is_female else "") + ("s" if many else ""),
-            "avec": "avec" if has_accompany else "",
-            "accompagnant": accompanies if has_accompany else "",
-            "Marie": accompanies if has_accompany else "",
-            "est": "sont" if has_accompanies else ("est" if has_accompany else ""),
+            "is_female": is_female,
         }
         for key in list(context.keys()):
             if isinstance(context[key], str):
@@ -68,7 +63,7 @@ class Family(models.Model):
         return context
 
     def __str__(self):
-        return str(_("{:full} family")).format(self)
+        return str(_("{:all} family")).format(self)
 
     def __format__(self, format_spec):
         """

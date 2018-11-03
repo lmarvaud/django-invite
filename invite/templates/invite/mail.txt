@@ -1,13 +1,13 @@
-Salut {{Françoise}},
+Salut {{guests}},
 
 
-Comment {{vas}} {{tu}} ?
+Comment {{guests_count | pluralize:"vas tu,allez vous"}} ?
 
-Comme {{tu}} le {{sais}} déjà, {%if family.host == "Marie"%}avec Jean, {%elif family.host == "Jean"%}avec Marie, {%endif%}nous allons nous marier !
+Comme {{guests_count | pluralize:"tu le sais,vous le savez"}} déjà, {%if family.host == "Marie"%}avec Jean, {%elif family.host == "Jean"%}avec Marie, {%endif%}nous allons nous marier !
 
-Pour fêter ça, {{tu}} {{es}} convié{{e}}{% if Marie %} avec {{Marie}}{% endif %}, <b>samedi 1er Juin</b> à Paris pour{% if family.invited_midday %}un déjeuner en famille{% if family.invited_afternoon %}, {%elif family.invited_evening%} et {%else%}.{%endif%}{%endif%}{% if family.invited_afternoon %}une après-midi melting pote{%if family.invited_evening%} et {%else%} !{%endif%}{%endif%}{% if family.invited_evening %}une soirée d'enfer !{%endif%}<br>
+Pour fêter ça, {{guests_count | pluralize:"tu es,vous êtes"}} convié{{e}}{{count | pluralize}}{% if has_accompany %} avec {{accompanies}}{% endif %}, **samedi 1er Juin** à Paris pour {% if family.invited_midday %}un déjeuner en famille{% if family.invited_afternoon %}, {%elif family.invited_evening%} et {%else%}.{%endif%}{%endif%}{% if family.invited_afternoon %}une après-midi melting pote{%if family.invited_evening%} et {%else%} !{%endif%}{%endif%}{% if family.invited_evening %}une soirée d'enfer !{%endif%}
 
-Save the date !
+**Save the date !**
 
 
 {{family.host}}
