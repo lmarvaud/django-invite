@@ -11,9 +11,12 @@ from argparse import RawDescriptionHelpFormatter
 
 from django.conf import settings
 from django.core.management import BaseCommand, CommandParser
+from django.utils.translation import ugettext_lazy as _
 
 from ...join_and import join_and
 from ...models import Family, Guest, Accompany
+
+MANY_LIST = ['children', 'girls', 'boys', 'colleges']
 
 
 def strip(listed):
@@ -44,9 +47,10 @@ def _create_guests(line):
 def _create_accompagnies(line):
     """Create the accompagnies list from the csv line"""
     if line["Accompagnant"]:
-        names = list(strip(multi_split(line["Accompagnant"], ',', ' et ', '&')))
+        names = list(strip(multi_split(line["Accompagnant"], ',', ' ' + str(_('and')) + ' ', '&')))
         for name in names:
-            yield Accompany(name=name, number=1 if "les " not in name else 2)
+            yield Accompany(name=name,
+                            number=1 if all(str(_(many)) not in name for many in MANY_LIST) else 2)
 
 
 class Command(BaseCommand):
