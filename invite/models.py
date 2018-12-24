@@ -36,7 +36,8 @@ class Family(models.Model):
         Create a template context for french language
         """
         guests_count = self.guests.count()
-        is_female = self.guests.exclude(female=True).count() == 0
+        is_female = not self.guests.exclude(female=True).exists()
+        accomanies_are_females = not self.accompanies.exclude(female=True).exists()
         guests = join_and(list(self.guests.values_list("name", flat=True)))
         accompanies = join_and(list(self.accompanies.values_list("name", flat=True)))
         accompanies_count = self.accompanies.aggregate(Sum("number"))
@@ -49,6 +50,7 @@ class Family(models.Model):
                             list(self.accompanies.values_list("name", flat=True))),
             "count": guests_count + accompanies_count,
             "accompanies": accompanies if accompanies_count else "",
+            "accompanies_e": "e" if accomanies_are_females else "",
             "accompanies_count": accompanies_count,
             "e": ("e" if is_female else ""),
             "guests": guests,
@@ -56,6 +58,7 @@ class Family(models.Model):
             "has_accompanies": has_accompanies,
             "has_accompany": has_accompany,
             "is_female": is_female,
+            "accompanies_are_female": accomanies_are_females,
         }
         for key in list(context.keys()):
             if isinstance(context[key], str):
@@ -111,6 +114,7 @@ class Accompany(models.Model):
     """
     family = models.ForeignKey(Family, models.CASCADE, "accompanies", verbose_name=_("family"),
                                null=False)
+    female = models.BooleanField(verbose_name=_("is a female"), default=False)
     name = models.CharField(verbose_name=_("name"), max_length=64)
     number = models.IntegerField(verbose_name=_("number of person"), default=1)
 
