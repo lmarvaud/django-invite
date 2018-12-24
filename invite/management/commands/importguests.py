@@ -38,10 +38,14 @@ def _create_guests(line):
     phones = list(strip(line["Tel"].split(',')))
     gender = list(strip(line["Gender"].split(',')))
     names = list(strip(multi_split(line["Qui"], ',', ' et ', '&')))
-    for i, email in enumerate(emails):
-        yield Guest(name=names[i], email=email,
-                    phone=phones[i] if len(phones) > i else "",
-                    female=gender[i].upper() == 'F')
+    for i, name in enumerate(names):
+        if i > len(gender):
+            logging.warning("missing gender to %s : SKIPPED", name)
+        else:
+            yield Guest(name=name,
+                        email=emails[i] if len(emails) > i else None,
+                        phone=phones[i] if len(phones) > i else "",
+                        female=gender[i].upper() == 'F')
 
 
 def _create_accompagnies(line):

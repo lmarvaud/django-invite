@@ -45,6 +45,7 @@ def mail(unused_model_admin, unused_request, families):
             (
                 "{} <{}>".format(*values)
                 for values in family.guests.values_list("name", "email")
+                if all(values)
             )
         )
         for family in families

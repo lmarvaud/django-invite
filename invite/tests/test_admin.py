@@ -92,3 +92,20 @@ class TestMail(TestCase):
         to_send = list(send_mass_html_mail__mock.call_args[0][0])
         from_email = to_send[0][3]
         self.assertEqual(from_email, "Marie <test_using_invite_use_host_in_from_email@example.com>")
+
+    @patch.object(admin, 'send_mass_html_mail')
+    @patch.object(admin.settings, 'INVITE_HOSTS',
+                  {"Marie": "test_send_mass_html_mail_reply_to@example.com"})
+    def test_send_mass_html_mail_to_send_no_email(self, send_mass_html_mail__mock: Mock):
+        """Check send_mass_html_mail_reply reply_to argument"""
+        self.family.guests.add(
+            Guest(name="Pierre", email=None, phone="0123456789", female=False, family=self.family),
+            bulk=False
+        )
+        families = Family.objects.filter(pk=self.family.pk)
+
+        admin.mail(None, None, families)
+
+        recipient = list(send_mass_html_mail__mock.call_args[0][0])[0][4]
+        self.assertListEqual(list(recipient),
+                             ["Françoise <valid@example.com>", "Jean <valid@example.com>"])

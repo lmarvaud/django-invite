@@ -96,7 +96,7 @@ class Guest(models.Model):
                                null=False)
     female = models.BooleanField(verbose_name=_("is a female"), default=False)
     name = models.CharField(verbose_name=_("name"), max_length=64)
-    email = models.EmailField(verbose_name=_("email address"))
+    email = models.EmailField(verbose_name=_("email address"), blank=True, null=True)
     phone = models.CharField(verbose_name=_("phone number"), max_length=20, blank=True, default="")
 
     def __str__(self):
