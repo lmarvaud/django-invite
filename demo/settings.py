@@ -35,6 +35,8 @@ INVITE_HOSTS = OrderedDict(
     Jean="jean@example.com",
 )
 
+EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
+
 # Application definition
 
 INSTALLED_APPS = [

@@ -1,0 +1,12 @@
+"Email","Phone","Host","Gender","Surname","Accompany surname"
+"valid@example.com","0123456789","Jean","F","Marie","Pierre"
+"valid@example.com","0123456789","Jean","F,M","Marie,Pierre","Paul"
+"valid@example.com,valid@example.com","0123456789","Jean","F,M","Marie,Pierre","Paul"
+,,,,Sous-total,
+"valid@example.com","0123456789","Jean","F","Marie","Pierre"
+"valid@example.com","0123456789","Jean","F,M","Marie,Pierre","Paul"
+"valid@example.com,valid@example.com","0123456789","Jean","F,M","Marie,Pierre","Paul"
+,,,,Sous-total,
+"valid@example.com","0123456789","Jean","F","Marie","Pierre"
+"valid@example.com","0123456789","Jean","F,M","Marie,Pierre","Paul"
+"valid@example.com,valid@example.com","0123456789","Jean","F,M","Marie,Pierre","Paul"

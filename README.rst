@@ -58,6 +58,11 @@ Existing variables are :
 ============================== ============================================
 Template variables             Description
 ============================== ============================================
+**Event**
+---------------------------------------------------------------------------
+``{event}``                    An event object containing next arguments
+``{event.name}``               The event name (optionnal)
+``{event.date}``               The event date (optionnal)
 **Family**
 ---------------------------------------------------------------------------
 ``{family}``                   A family object containing next arguments
@@ -87,20 +92,41 @@ Template variables             Description
 `importguests` command
 ----------------------
 
-Import guests from a csv file ::
+usage: manage.py importguests [-h] [--version] [-v {0,1,2,3}]
+                              [--settings SETTINGS] [--pythonpath PYTHONPATH]
+                              [--traceback] [--no-color] [--date EVENT_DATE]
+                              [--name EVENT_NAME]
+                              csv
 
-    usage: manage.py importguests [-h] [--version] [-v {0,1,2,3}]
-                                  [--settings SETTINGS] [--pythonpath PYTHONPATH]
-                                  [--traceback] [--no-color]
-                                  csv
+Import guests from a csv file
 
 positional arguments::
 
- csv                  path to the csv file to parse
+  csv                   path to the csv file to parse
 
 optional arguments::
 
- -h, --help           show this help message and exit
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit
+  -v {0,1,2,3}, --verbosity {0,1,2,3}
+                        Verbosity level; 0=minimal output, 1=normal output,
+                        2=verbose output, 3=very verbose output
+  --settings SETTINGS   The Python path to a settings module, e.g.
+                        "myproject.settings.main". If this isn't provided, the
+                        DJANGO_SETTINGS_MODULE environment variable will be
+                        used.
+  --pythonpath PYTHONPATH
+                        A directory to add to the Python path, e.g.
+                        "/home/djangoprojects/myproject".
+  --traceback           Raise on CommandError exceptions
+  --no-color            Don't colorize the command output.
+
+Event::
+
+  Create an link imported guests to an event
+
+  --date EVENT_DATE     date of the event
+  --name EVENT_NAME     name of the event
 
 csv format is like::
 

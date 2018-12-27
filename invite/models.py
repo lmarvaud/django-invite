@@ -1,11 +1,12 @@
 """
 Data models configurations of django-invite project
+
+Created by lmarvaud on 03/11/2018
 """
 from django.db import models
 from django.db.models import Sum
-from django.template.defaultfilters import capfirst
 from django.utils.functional import cached_property
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 
 from .join_and import join_and
 
@@ -60,13 +61,10 @@ class Family(models.Model):
             "is_female": is_female,
             "accompanies_are_female": accomanies_are_females,
         }
-        for key in list(context.keys()):
-            if isinstance(context[key], str):
-                context.setdefault(capfirst(key), capfirst(context[key]))
         return context
 
     def __str__(self):
-        return str(_("{:all} family")).format(self)
+        return str(_("%(all)s family") % {"all": self.context['all']})
 
     def __format__(self, format_spec):
         """
@@ -123,3 +121,39 @@ class Accompany(models.Model):
 
     class Meta:
         verbose_name = _("accompany")
+
+
+class Event(models.Model):
+    """
+    Invitation event
+    """
+    objects = models.Manager()
+
+    name = models.CharField(verbose_name=_("name"), max_length=64, blank=True, null=True)
+    date = models.DateField(verbose_name=_("date"), blank=True, null=True)
+    families = models.ManyToManyField("Family", "invitations", blank=True)
+
+    def context(self, family):
+        """
+        Create a template context
+        """
+        context = family.context
+        context.update({
+            "event": self
+        })
+        return context
+
+    def __str__(self):
+        if self.name and self.date:
+            result = _("%(name)s of the %(date)s") % {"name": self.name, "date": self.date}
+        elif self.name:
+            result = _("%(name)s") % {"name": self.name}
+        elif self.date:
+            result = _("Event of the %(date)s") % {"date": self.date}
+        else:
+            result = "{pk}".format(pk=self.pk)
+        return result
+
+    class Meta:
+        verbose_name = _("event")
+        verbose_name_plural = _("events")

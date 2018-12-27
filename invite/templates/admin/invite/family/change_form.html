@@ -1,10 +1,12 @@
 {% extends "admin/change_form.html" %}
+{% load i18n %}
 {% block object-tools-items %}
     {{ block.super }}
     {% if original %} {# Only show if changing #}
         <li>
             <a href="{% url 'show_mail' original.pk %}">
-                 Afficher l'email
+                {% comment %}Translators: Admin button to show the email preview{% endcomment %}
+                {% trans "Preview the email" %}
             </a>
         </li>
     {% endif %}

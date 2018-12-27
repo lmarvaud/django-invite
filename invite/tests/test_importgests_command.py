@@ -1,12 +1,15 @@
 """
 Test django_invite importguests command
+
+Created by lmarvaud on 01/01/2019
 """
 import tempfile
+from datetime import date
 
+from django.core.management import call_command
 from django.test import TestCase
 
-from invite.management.commands import importguests
-from invite.models import Family
+from invite.models import Family, Event
 
 
 class TestCommand(TestCase):
@@ -19,6 +22,55 @@ class TestCommand(TestCase):
             family.delete()
         super(TestCommand, self).tearDown()
 
+    def test_event(self):
+        """
+        Test that an event is created if required
+        """
+        with tempfile.NamedTemporaryFile('w+') as csv_file:
+            csv_file.write(
+                "Email,Tel,Source,Gender,Qui,Accompagnant"
+            )
+            csv_file.file.close()
+
+            call_command("importguests", csv_file.name, event_date="2018-12-31", event_name="Test")
+
+            self.assertEqual(Event.objects.count(), 1)
+            event = Event.objects.get()
+            self.assertEqual(event.name, "Test")
+            self.assertEqual(event.date, date(2018, 12, 31))
+
+    def test_no_event(self):
+        """
+        Test that no event is created if not required
+        """
+        with tempfile.NamedTemporaryFile('w+') as csv_file:
+            csv_file.write(
+                "Email,Tel,Source,Gender,Qui,Accompagnant"
+            )
+            csv_file.file.close()
+
+            call_command("importguests", csv_file.name)
+
+            self.assertEqual(Event.objects.count(), 0)
+
+    def test_event_link(self):
+        """
+        Test that the created event is linked to created families
+        """
+        with tempfile.NamedTemporaryFile('w+') as csv_file:
+            csv_file.write(
+                "Email,Tel,Source,Gender,Qui,Accompagnant\n"
+                "valid@example.com,0123456789,Marie,F,Jeanne,"
+            )
+            csv_file.file.close()
+
+            call_command("importguests", csv_file.name, event_date="2018-12-31", event_name="Test")
+
+            event = Event.objects.get()
+            self.assertEqual(event.families.count(), 1)
+            family = event.families.get()
+            self.assertEqual(family.guests.first().name, "Jeanne")
+
     def test_simple(self):
         """Test importguests command with a simple case : one family with one guest"""
         with tempfile.NamedTemporaryFile('w+') as csv_file:
@@ -28,7 +80,7 @@ class TestCommand(TestCase):
             )
             csv_file.file.close()
 
-            importguests.Command().handle(csv=csv_file.name)
+            call_command("importguests", csv_file.name)
 
             self.assertEqual(Family.objects.count(), 1)
             family = Family.objects.get()
@@ -50,7 +102,7 @@ class TestCommand(TestCase):
             )
             csv_file.file.close()
 
-            importguests.Command().handle(csv=csv_file.name)
+            call_command("importguests", csv_file.name)
 
             self.assertEqual(Family.objects.count(), 1)
             family = Family.objects.get()
@@ -76,7 +128,7 @@ class TestCommand(TestCase):
             )
             csv_file.file.close()
 
-            importguests.Command().handle(csv=csv_file.name)
+            call_command("importguests", csv_file.name)
 
             family = Family.objects.get()
             self.assertEqual(family.accompanies.count(), 1)
@@ -93,7 +145,7 @@ class TestCommand(TestCase):
             )
             csv_file.file.close()
 
-            importguests.Command().handle(csv=csv_file.name)
+            call_command("importguests", csv_file.name)
 
             family = Family.objects.get()
             self.assertEqual(family.accompanies.count(), 2)
