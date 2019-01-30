@@ -14,29 +14,45 @@ class TestFamilyMixin:
     """
     family = None
 
+    @staticmethod
+    def create_family(name_suffix: str = ""):
+        """
+        Create a family with 2 guests and 2 accompanies
+
+        Guests are named "Françoise{{name_suffix}}" and "Jean{{name_suffix}}"
+        Accompanies : "Michel{{name_suffix}}" and "Michelle{{name_suffix}}
+
+        :param name_suffix:
+        :param host:
+        :return:
+        """
+        family = Family.objects.create(host="Marie")
+        family.guests.add(
+            Guest(name="Françoise%s" % name_suffix, email="valid@example.com", phone="0123456789",
+                  female=True),
+            Guest(name="Jean%s" % name_suffix, email="valid@example.com", phone="0123456789",
+                  female=False),
+            bulk=False
+        )
+        family.accompanies.add(
+            Accompany(name="Michel%s" % name_suffix, number=1),
+            Accompany(name="Michelle%s" % name_suffix, number=1),
+            bulk=False
+        )
+        return family
+
     def setUp(self):  # pylint: disable=invalid-name
         """
         Create the family
         """
         super(TestFamilyMixin, self).setUp()
-        self.family = Family.objects.create(host="Marie")
-        self.family.guests.add(
-            Guest(name="Françoise", email="valid@example.com", phone="0123456789", female=True),
-            Guest(name="Jean", email="valid@example.com", phone="0123456789", female=False),
-            bulk=False
-        )
-        self.family.accompanies.add(
-            Accompany(name="Michel", number=1),
-            Accompany(name="Michelle", number=1),
-            bulk=False
-        )
+        self.family = self.create_family()
 
     def tearDown(self):  # pylint: disable=invalid-name
         """
         Delete the family
         """
         self.family.delete()
-        self.family = None
         super(TestFamilyMixin, self).tearDown()
 
 
@@ -61,18 +77,24 @@ class TestEventMixin(TestFamilyMixin):
                      "Marie\n")
     event = None
 
+
+    @staticmethod
+    def create_event(*family, name="test"):
+        """Create an event with family"""
+        event = Event.objects.create(name=name, date=date(2018, 12, 31))
+        event.families.add(*family)
+        return event
+
     def setUp(self):
         """
         Create the event and call TestFamilyMixin to create the family
         """
         super(TestEventMixin, self).setUp()
-        self.event = Event.objects.create(name="test", date=date(2018, 12, 31))
-        self.event.families.add(self.family)
+        self.event = self.create_event(self.family)
 
     def tearDown(self):
         """
         Delete the event
         """
         self.event.delete()
-        self.event = None
         super(TestEventMixin, self).tearDown()

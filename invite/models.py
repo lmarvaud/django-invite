@@ -3,8 +3,10 @@ Data models configurations of django-invite project
 
 Created by lmarvaud on 03/11/2018
 """
+from django.conf import settings
 from django.db import models
 from django.db.models import Sum
+from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
@@ -142,6 +144,32 @@ class Event(models.Model):
             "event": self
         })
         return context
+
+    def gen_mass_email(self, family, request=None):
+        """
+        Generate the mass mail tuple for one email
+
+        see invite.send_mass_html_mail.send_mass_html_mail for more detail
+
+        :param family: the family to send the event message to
+        :param request: the request which initiated the generation
+        :return: a tuple with the subject, the text message, the html message and the destinations
+        email
+        """
+        return (
+            render_to_string("invite/subject.txt", context=self.context(family), request=request),
+            render_to_string("invite/mail.txt", context=self.context(family), request=request),
+            render_to_string("invite/mail.html", context=self.context(family), request=request),
+            "{} <{}>".format(family.host, settings.INVITE_HOSTS[family.host])
+            if (getattr(settings, "INVITE_USE_HOST_IN_FROM_EMAIL", False) and
+                family.host in settings.INVITE_HOSTS)
+            else None,
+            (
+                "{} <{}>".format(*values)
+                for values in family.guests.values_list("name", "email")
+                if all(values)
+            )
+        )
 
     def __str__(self):
         if self.name and self.date:
