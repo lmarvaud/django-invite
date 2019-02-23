@@ -142,7 +142,7 @@ class TestEvent(TestEventMixin, TestCase):
         """
         test __str__ return value on Event object without name
         """
-        expected_result = "Event of the 2018-12-31"
+        expected_result = "event of the 2018-12-31"
         event = Event(pk=1, name="", date=date(2018, 12, 31))
 
         self.assertEqual(str(event), expected_result)

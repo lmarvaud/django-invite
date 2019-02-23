@@ -5,7 +5,9 @@ Created by lmarvaud on 01/01/2019
 """
 from datetime import date
 
-from invite.models import Family, Guest, Accompany, Event
+from os import path
+
+from invite.models import Family, Guest, Accompany, Event, MailTemplate
 
 
 class TestFamilyMixin:
@@ -56,6 +58,31 @@ class TestFamilyMixin:
         super(TestFamilyMixin, self).tearDown()
 
 
+class TestMailTemplateMixin:  # pylint: disable=too-few-public-methods
+    """
+    Test case mixin that create a mail template for an event
+
+    Note: the event has te be created before the set up as been created. You may order the subclass
+    like :
+    ```python
+    class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):
+    ```
+    """
+    event = None
+
+    def setUp(self):  # pylint: disable=invalid-name
+        """
+        Create a mail template for the event test case event
+        """
+        super(TestMailTemplateMixin, self).setUp()
+        text_template = open(path.join(path.dirname(__file__), "templates", "mail.txt")).read()
+        html_template = open(path.join(path.dirname(__file__), "templates", "mail.html")).read()
+        subject_template = open(path.join(path.dirname(__file__), "templates",
+                                          "subject.txt")).read()
+        MailTemplate.objects.create(event=self.event, text=text_template, html=html_template,
+                                    subject=subject_template)
+
+
 class TestEventMixin(TestFamilyMixin):
     """
     Test case mixin creating an event with a family
@@ -98,3 +125,33 @@ class TestEventMixin(TestFamilyMixin):
         """
         self.event.delete()
         super(TestEventMixin, self).tearDown()
+
+
+class MockSuperUser:  # pylint: disable=too-few-public-methods
+    """Fake super user"""
+    is_authenticated = True
+    is_active = True
+    is_staff = True
+    is_superuser = True
+
+    @staticmethod
+    def has_perm(unused_perm):
+        """Return super user permission : always True"""
+        return True
+
+
+class MockRequest:  # pylint: disable=too-few-public-methods
+    """Fake request"""
+    _instance = None
+    method = "GET"
+
+    def __init__(self):
+        """Initialize the user"""
+        self.user = MockSuperUser()
+
+    @classmethod
+    def instance(cls):
+        """Gest singleton instance"""
+        if not cls._instance:
+            cls._instance = cls()
+        return cls._instance

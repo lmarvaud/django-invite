@@ -8,18 +8,27 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 
-from .models import Family, Guest, Accompany, Event
+from invite.join_and import join_and
+from .models import Family, Guest, Accompany, Event, MailTemplate
 from .send_mass_html_mail import send_mass_html_mail
 
 
 class InviteInline(admin.TabularInline):
-    """Family guest admin view"""
+    """
+    Family guest admin view
+
+    A family require at least one guest
+    """
     model = Guest
+    extra = 2
+    min_num = 1
 
 
 class AccompanyInline(admin.TabularInline):
     """Family accompanies admin view"""
     model = Accompany
+    extra = 1
+    min_num = 0
 
 
 class FamilyInvitationForm(ModelForm):
@@ -33,15 +42,28 @@ class FamilyInvitationInline(admin.TabularInline):
     model = Event.families.through
     readonly_fields = ('show_mail',)
     form = FamilyInvitationForm
+    extra = 1
+    min_num = 0
 
     @staticmethod
     def show_mail(instance):
         """Extra field adding a link to preview the email"""
         if instance.pk:
-            url = reverse('show_mail', kwargs={"family_id": instance.family_id})
-            return format_html(u'<a href="{}">{}</a>'.format(url, _("Preview the mail")))
+            if instance.event.has_mailtemplate:
+                url = reverse('show_mail', kwargs={"event_id": instance.event_id,
+                                                   "family_id": instance.family_id})
+                return format_html(u'<a href="{}">{}</a>'.format(url, _("Preview the mail")))
+            return _("The event has no email template set")
         return ""
 
+
+class MailTemplateInline(admin.StackedInline):
+    """
+    MailTemplate admin view
+
+    An event can only have one mail template (for now ?)
+    """
+    model = MailTemplate
 
 class FamilyInvitationModelAdminMixin(admin.ModelAdmin):
     """
@@ -55,7 +77,9 @@ class FamilyInvitationModelAdminMixin(admin.ModelAdmin):
     def save_formset(self, request, form, formset, change):
         """Send FamilyInvitation mail after saving the formset"""
         super().save_formset(request, form, formset, change)
-        if isinstance(form, FamilyInvitationForm):
+        if 'send_mail' in formset.form.declared_fields and \
+                'event' in formset.form.base_fields and \
+                'family' in formset.form.base_fields:
             self._send_mail(request, formset)
 
     @staticmethod
@@ -99,8 +123,9 @@ class EventAdmin(FamilyInvitationModelAdminMixin):
     exclude = ('families', )
     actions = ["send_mail"]
     search_fields = ("name", "date")
+    inlines = [MailTemplateInline] + FamilyInvitationModelAdminMixin.inlines
 
-    def send_mail(self, request, invitations):
+    def send_mail(self, request, events):
         """
         Email action, send the email to the guest
 
@@ -109,9 +134,15 @@ class EventAdmin(FamilyInvitationModelAdminMixin):
         :param families: the list of the selected families to send the mail to
         :return:
         """
+        events_without_mail = [str(event) for event in events if not event.has_mailtemplate]
+        if events_without_mail:
+            self.message_user(request, _("The %(events)s has no email template set") %
+                              {"events": join_and(events_without_mail)},
+                              messages.ERROR)
+            return
         to_send = (
             invitation.gen_mass_email(family, request=request)
-            for invitation in invitations
+            for invitation in events
             for family in invitation.families.all()
         )
         result = send_mass_html_mail(

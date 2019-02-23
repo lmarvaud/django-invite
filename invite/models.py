@@ -6,7 +6,8 @@ Created by lmarvaud on 03/11/2018
 from django.conf import settings
 from django.db import models
 from django.db.models import Sum
-from django.template.loader import render_to_string
+from django.template import Template
+from django.template.context import make_context
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
@@ -124,7 +125,6 @@ class Accompany(models.Model):
     class Meta:
         verbose_name = _("accompany")
 
-
 class Event(models.Model):
     """
     Invitation event
@@ -156,10 +156,12 @@ class Event(models.Model):
         :return: a tuple with the subject, the text message, the html message and the destinations
         email
         """
+        context = self.context(family)
+        assert self.has_mailtemplate, "The event has no email template set"
         return (
-            render_to_string("invite/subject.txt", context=self.context(family), request=request),
-            render_to_string("invite/mail.txt", context=self.context(family), request=request),
-            render_to_string("invite/mail.html", context=self.context(family), request=request),
+            self.mailtemplate.render_subject(context=context, request=request),  # pylint: disable=no-member
+            self.mailtemplate.render_text(context=context, request=request),  # pylint: disable=no-member
+            self.mailtemplate.render_html(context=context, request=request),  # pylint: disable=no-member
             "{} <{}>".format(family.host, settings.INVITE_HOSTS[family.host])
             if (getattr(settings, "INVITE_USE_HOST_IN_FROM_EMAIL", False) and
                 family.host in settings.INVITE_HOSTS)
@@ -171,13 +173,22 @@ class Event(models.Model):
             )
         )
 
+    @property
+    def has_mailtemplate(self) -> bool:
+        """Determine wether the event has a mail template set or not yet"""
+        try:
+            getattr(self, "mailtemplate")
+        except Event.mailtemplate.RelatedObjectDoesNotExist:  # pylint: disable=no-member
+            return False
+        return True
+
     def __str__(self):
         if self.name and self.date:
             result = _("%(name)s of the %(date)s") % {"name": self.name, "date": self.date}
         elif self.name:
             result = _("%(name)s") % {"name": self.name}
         elif self.date:
-            result = _("Event of the %(date)s") % {"date": self.date}
+            result = _("event of the %(date)s") % {"date": self.date}
         else:
             result = "{pk}".format(pk=self.pk)
         return result
@@ -185,3 +196,31 @@ class Event(models.Model):
     class Meta:
         verbose_name = _("event")
         verbose_name_plural = _("events")
+
+
+class MailTemplate(models.Model):
+    """Event mail template"""
+    objects = models.Manager()
+
+    subject = models.CharField(_("subject"), max_length=512, blank=True)
+    text = models.TextField(_("raw content"), blank=True)
+    html = models.TextField(_("html content"), blank=True)
+    event = models.OneToOneField(Event, models.CASCADE)
+
+    @staticmethod
+    def _render(template_string, context, request):
+        """Render a template string"""
+        context = make_context(context, request, autoescape=True)
+        return Template(template_string).render(context)
+
+    def render_subject(self, context, request):
+        """Render the subject"""
+        return self._render(self.subject, context, request)
+
+    def render_text(self, context, request):
+        """Render the text"""
+        return self._render(self.text, context, request)
+
+    def render_html(self, context, request):
+        """Render the html"""
+        return self._render(self.html, context, request)
