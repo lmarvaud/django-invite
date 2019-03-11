@@ -8,19 +8,18 @@ from unittest.mock import patch, Mock
 
 from django.contrib.admin import AdminSite
 from django.shortcuts import reverse
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
-from invite.tests.common import TestEventMixin, TestMailTemplateMixin, MockSuperUser, MockRequest
 from invite import admin
 from invite.models import Family, Guest, Event
+from invite.tests.common import TestEventMixin, TestMailTemplateMixin, MockSuperUser, MockRequest
 
 
 class TestMail(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint: disable=too-many-ancestors
     """Test admin mail action"""
 
     @patch.object(admin, 'send_mass_html_mail')
-    @patch.object(admin.settings, 'INVITE_HOSTS',
-                  {"Marie": "test_send_mass_html_mail_reply_to@example.com"})
+    @override_settings(INVITE_HOSTS={"Marie": "test_send_mass_html_mail_reply_to@example.com"})
     def test_send_mass_html_mail_reply_to(self, send_mass_html_mail__mock: Mock):
         """Check send_mass_html_mail_reply reply_to argument"""
         events = Event.objects.filter(pk=self.event.pk)
@@ -54,9 +53,10 @@ class TestMail(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint: disa
                              ["Françoise <valid@example.com>", "Jean <valid@example.com>"])
 
     @patch.object(admin, 'send_mass_html_mail')
-    @patch.object(admin.settings, 'INVITE_HOSTS',
-                  {"Marie": "test_using_invite_use_host_in_from_email@example.com"})
-    @patch.object(admin.settings, 'INVITE_USE_HOST_IN_FROM_EMAIL', True, create=True)
+    @override_settings(
+        INVITE_HOSTS={"Marie": "test_using_invite_use_host_in_from_email@example.com"},
+        INVITE_USE_HOST_IN_FROM_EMAIL=True
+    )
     def test_using_invite_use_host_in_from_email(self, send_mass_html_mail__mock: Mock):
         """Test mail using INVITE_USE_HOST_IN_FROM_EMAIL setting"""
         events = Event.objects.filter(pk=self.event.pk)
@@ -68,8 +68,7 @@ class TestMail(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint: disa
         self.assertEqual(from_email, "Marie <test_using_invite_use_host_in_from_email@example.com>")
 
     @patch.object(admin, 'send_mass_html_mail')
-    @patch.object(admin.settings, 'INVITE_HOSTS',
-                  {"Marie": "test_send_mass_html_mail_reply_to@example.com"})
+    @override_settings(INVITE_HOSTS={"Marie": "test_send_mass_html_mail_reply_to@example.com"})
     def test_send_mass_html_mail_to_send_no_email(self, send_mass_html_mail__mock: Mock):
         """Check send_mass_html_mail_reply reply_to argument"""
         self.family.guests.add(
@@ -111,8 +110,12 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
         fadm = admin.FamilyAdmin(Family, self.site)
         self.assertListEqual(list(fadm.get_list_display(MockRequest.instance())), ["__str__"])
 
+    @override_settings(CSRF_HEADER_NAME="CSRF_HEADER_NAME", CSRF_COOKIE_NAME="CSRF_COOKIE_NAME",
+                       AUTHENTICATION_BACKENDS=["invite.tests.common.MockSuperUserBackend"])
     def _send_form(self):
-        """Mixin function to send email on the formset with cleaned data"""
+        """
+        Mixin function to send email on the formset with cleaned data
+        """
         path = reverse("admin:invite_family_change", kwargs={"object_id": self.family.pk})
         event_families_id = Event.families.through.objects.values_list("pk", flat=True)
         data = {
@@ -136,16 +139,12 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
             'accompanies-INITIAL_FORMS': '0',
             'accompanies-TOTAL_FORMS': '0',
         }
-        request_mock = Mock(user=MockSuperUser(), POST=data, GET={}, method="POST", path=path,
-                            current_app="invite", COOKIES={"csrftoken": "mocked"},
-                            META={"csrftoken": "mocked", "SCRIPT_NAME": ""})
-        fadm = admin.FamilyAdmin(Family, self.site)
-        with patch.object(fadm, "log_change"):
-            fadm.changeform_view(request_mock, str(self.family.pk), path)
+        self.client.force_login(MockSuperUser())
+        with patch.object(admin.FamilyAdmin, "log_change"):
+            self.client.post(path, data=data)
 
     @patch.object(admin, 'send_mass_html_mail')
-    @patch.object(admin.settings, 'INVITE_HOSTS',
-                  {"Marie": "test_send_mass_html_mail_reply_to@example.com"})
+    @override_settings(INVITE_HOSTS={"Marie": "test_send_mass_html_mail_reply_to@example.com"})
     def test_send_mass_html_mail_reply_to(self, send_mass_html_mail__mock: Mock):
         """Check send_mass_html_mail_reply reply_to argument"""
         self._send_form()
@@ -175,9 +174,9 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
                              ["Françoise <valid@example.com>", "Jean <valid@example.com>"])
 
     @patch.object(admin, 'send_mass_html_mail')
-    @patch.object(admin.settings, 'INVITE_HOSTS',
-                  {"Marie": "test_using_invite_use_host_in_from_email@example.com"})
-    @patch.object(admin.settings, 'INVITE_USE_HOST_IN_FROM_EMAIL', True, create=True)
+    @override_settings(
+        INVITE_HOSTS={"Marie": "test_using_invite_use_host_in_from_email@example.com"},
+        INVITE_USE_HOST_IN_FROM_EMAIL=True)
     def test_using_invite_use_host_in_from_email(self, send_mass_html_mail__mock: Mock):
         """Test Family Invitation Formset send mail using INVITE_USE_HOST_IN_FROM_EMAIL setting"""
         self._send_form()
@@ -187,8 +186,7 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
         self.assertEqual(from_email, "Marie <test_using_invite_use_host_in_from_email@example.com>")
 
     @patch.object(admin, 'send_mass_html_mail')
-    @patch.object(admin.settings, 'INVITE_HOSTS',
-                  {"Marie": "test_send_mass_html_mail_reply_to@example.com"})
+    @override_settings(INVITE_HOSTS={"Marie": "test_send_mass_html_mail_reply_to@example.com"})
     def test_fifs_send_mass_html_mail_to_send_no_email(self, send_mass_html_mail__mock: Mock):
         """Check send_mass_html_mail_reply reply_to argument"""
         self.family.guests.add(
@@ -234,6 +232,8 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
             admin.FamilyInvitationInline,
         ])
 
+    @override_settings(CSRF_HEADER_NAME="CSRF_HEADER_NAME", CSRF_COOKIE_NAME="CSRF_COOKIE_NAME",
+                       AUTHENTICATION_BACKENDS=["invite.tests.common.MockSuperUserBackend"])
     def _send_form(self):
         """Mixin function to send email on the formset with cleaned data"""
         path = reverse("admin:invite_event_change", kwargs={"object_id": self.event.pk})
@@ -254,16 +254,12 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
             'mailtemplate-INITIAL_FORMS': '0',
             'mailtemplate-TOTAL_FORMS': '0',
         }
-        request_mock = Mock(user=MockSuperUser(), POST=data, GET={}, method="POST", path=path,
-                            current_app="invite", COOKIES={"csrftoken": "mocked"},
-                            META={"csrftoken": "mocked", "SCRIPT_NAME": ""})
-        fadm = admin.EventAdmin(Event, self.site)
-        with patch.object(fadm, "log_change"):
-            fadm.changeform_view(request_mock, str(self.event.pk), path)
+        self.client.force_login(MockSuperUser())
+        with patch.object(admin.EventAdmin, "log_change"):
+            self.client.post(path, data=data)
 
     @patch.object(admin, 'send_mass_html_mail')
-    @patch.object(admin.settings, 'INVITE_HOSTS',
-                  {"Marie": "test_send_mass_html_mail_reply_to@example.com"})
+    @override_settings(INVITE_HOSTS={"Marie": "test_send_mass_html_mail_reply_to@example.com"})
     def test_send_mass_html_mail_reply_to(self, send_mass_html_mail__mock: Mock):
         """Check send_mass_html_mail_reply reply_to argument"""
         self._send_form()
@@ -293,20 +289,20 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
                              ["Françoise <valid@example.com>", "Jean <valid@example.com>"])
 
     @patch.object(admin, 'send_mass_html_mail')
-    @patch.object(admin.settings, 'INVITE_HOSTS',
-                  {"Marie": "test_using_invite_use_host_in_from_email@example.com"})
-    @patch.object(admin.settings, 'INVITE_USE_HOST_IN_FROM_EMAIL', True, create=True)
+    @override_settings(
+        INVITE_HOSTS={"Marie": "test_using_invite_use_host_in_from_email@example.com"},
+        INVITE_USE_HOST_IN_FROM_EMAIL=True)
     def test_using_invite_use_host_in_from_email(self, send_mass_html_mail__mock: Mock):
         """Test Family Invitation Formset send mail using INVITE_USE_HOST_IN_FROM_EMAIL setting"""
         self._send_form()
 
+        self.assertEqual(send_mass_html_mail__mock.call_count, 1)
         to_send = list(send_mass_html_mail__mock.call_args[0][0])
         from_email = to_send[0][3]
         self.assertEqual(from_email, "Marie <test_using_invite_use_host_in_from_email@example.com>")
 
     @patch.object(admin, 'send_mass_html_mail')
-    @patch.object(admin.settings, 'INVITE_HOSTS',
-                  {"Marie": "test_send_mass_html_mail_reply_to@example.com"})
+    @override_settings(INVITE_HOSTS={"Marie": "test_send_mass_html_mail_reply_to@example.com"})
     def test_fifs_send_mass_html_mail_to_send_no_email(self, send_mass_html_mail__mock: Mock):
         """Check send_mass_html_mail_reply reply_to argument"""
         self.family.guests.add(
@@ -316,6 +312,7 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
 
         self._send_form()
 
+        self.assertEqual(send_mass_html_mail__mock.call_count, 1)
         recipient = list(send_mass_html_mail__mock.call_args[0][0])[0][4]
         self.assertListEqual(list(recipient),
                              ["Françoise <valid@example.com>", "Jean <valid@example.com>"])

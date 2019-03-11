@@ -4,8 +4,8 @@ Django-invite common test mixin
 Created by lmarvaud on 01/01/2019
 """
 from datetime import date
-
 from os import path
+from unittest.mock import Mock
 
 from invite.models import Family, Guest, Accompany, Event, MailTemplate
 
@@ -133,12 +133,35 @@ class MockSuperUser:  # pylint: disable=too-few-public-methods
     is_active = True
     is_staff = True
     is_superuser = True
+    _meta = Mock(
+        pk=Mock(
+            value_to_string=Mock(
+                return_value="1"))
+    )
+
+    @staticmethod
+    def save(update_fields=None):  # pylint: disable=unused-argument
+        """Save the last update"""
+        return True
 
     @staticmethod
     def has_perm(unused_perm):
         """Return super user permission : always True"""
         return True
 
+class MockSuperUserBackend:  # pylint: disable=too-few-public-methods
+    """
+    Authentication backend to fake super user authentication
+
+        @override_settings(AUTHENTICATION_BACKENDS=["invite.tests.common.MockSuperUserBackend"])
+        def function(self):
+            self.client.force_login(MockSuperUser())
+            self.client.get('/admin/')
+    """
+    @staticmethod
+    def get_user(*_):
+        """Retrieve the mocked super user"""
+        return MockSuperUser()
 
 class MockRequest:  # pylint: disable=too-few-public-methods
     """Fake request"""
