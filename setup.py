@@ -33,8 +33,12 @@ setup(
     keywords='django email invitation',
     packages=find_packages(exclude=['demo']),
     include_package_data=True,
+    install_requires=[
+        "django>2.1.2,<=2.1.7",
+        "pytz==2018.7"
+    ],
     dependency_links=[
-        "django>2.1.2,<=2.1.3",
+        "django>2.1.2,<=2.1.7",
         "pytz==2018.7"
     ],
 )
