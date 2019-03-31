@@ -89,6 +89,22 @@ Template variables             Description
 ``{has_accompany}``            Boolean wether there is any accompanies or none
 ============================== ============================================
 
+### template extra filter
+
+You can add some extra template by adding :
+
+    {% load invite_extras %}
+
+in the template. This give you access to :
+
+=============== =======
+filter          example
+=============== =======
+``attrgetter``  ``{{family.guests | attrgetter:"name" | join:", "}}`` would display : ``Michelle, Jean``
+``itemgetter``  ``{{family.guests | attrgetter:"name" | itemgetter:0 | join:","}}`` would display : ``M, J``
+``join_and``    ``{{family.guests | attrgetter:"name" | join_and}}`` would display : ``Michelle and Jean``
+
+
 `importguests` command
 ----------------------
 

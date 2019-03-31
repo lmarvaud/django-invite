@@ -3,12 +3,13 @@ Admin configurations for django-invite project
 """
 from django.conf import settings
 from django.contrib import admin, messages
-from django.forms import BooleanField, ModelForm
+from django.forms import BooleanField, ModelForm, ModelChoiceField
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 
 from invite.join_and import join_and
+from invite.transitional_form import TransitionalForm, transitional_form
 from .models import Family, Guest, Accompany, Event, MailTemplate
 from .send_mass_html_mail import send_mass_html_mail
 
@@ -65,6 +66,7 @@ class MailTemplateInline(admin.StackedInline):
     """
     model = MailTemplate
 
+
 class FamilyInvitationModelAdminMixin(admin.ModelAdmin):
     """
     Mixin model admin for family invitation management
@@ -102,6 +104,13 @@ class FamilyInvitationModelAdminMixin(admin.ModelAdmin):
                                  _("%(result)d messages send") % {"result": send_result})
 
 
+class AddToEventForm(TransitionalForm):
+    """
+    Transitional Form to add families to an event
+    """
+    event = ModelChoiceField(queryset=Event.objects.all(), required=True)
+
+
 @admin.register(Family, site=admin.site)
 class FamilyAdmin(FamilyInvitationModelAdminMixin):
     """
@@ -111,6 +120,19 @@ class FamilyAdmin(FamilyInvitationModelAdminMixin):
     """
     inlines = [InviteInline, AccompanyInline] + FamilyInvitationModelAdminMixin.inlines
     search_fields = ("guests__name", "accompanies__name")
+    actions = ["add_to_event"]
+
+    @transitional_form(form_class=AddToEventForm)
+    def add_to_event(self, request, families, form):  # pylint: disable=no-self-use
+        """
+        Add selected families to an event
+        """
+        event = form.cleaned_data['event']
+        families = families.exclude(invitations=event)
+        event.families.add(*families)
+        messages.success(request, _('{updated} families were added to the {event}').format(
+            updated=len(families), event=event))
+    add_to_event.short_description = _('Add to an event')
 
 
 @admin.register(Event, site=admin.site)

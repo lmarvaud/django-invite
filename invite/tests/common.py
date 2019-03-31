@@ -94,14 +94,16 @@ class TestEventMixin(TestFamilyMixin):
                      "Pour fêter ça, vous êtes conviés avec Michel and Michelle, "
                      "<b>samedi 1er Juin</b> à Paris pour\n\n\n"
                      "une soirée d'enfer !<br>\n<br>\n<b>Save the date !</b><br>\n<br>\n<br>\n"
-                     "Marie<br>\n")
+                     "Marie<br>\n"
+                     "<br>\n"
+                     "Emails : valid@example.com and valid@example.com")
     expected_text = ("Salut Françoise and Jean,\n\n\n"
                      "Comment allez vous ?\n\n"
                      "Comme vous le savez déjà, avec Jean, nous allons nous marier !\n\n"
                      "Pour fêter ça, vous êtes conviés avec Michel and Michelle, **samedi 1er "
                      "Juin** à Paris pour une soirée d'enfer !\n\n"
                      "**Save the date !**\n\n\n"
-                     "Marie\n")
+                     "FJ\n")
     event = None
 
 
@@ -145,9 +147,15 @@ class MockSuperUser:  # pylint: disable=too-few-public-methods
         return True
 
     @staticmethod
+    def has_module_perms(*_):
+        """Superuser can access to all modules"""
+        return True
+
+    @staticmethod
     def has_perm(unused_perm):
         """Return super user permission : always True"""
         return True
+
 
 class MockSuperUserBackend:  # pylint: disable=too-few-public-methods
     """
@@ -162,6 +170,7 @@ class MockSuperUserBackend:  # pylint: disable=too-few-public-methods
     def get_user(*_):
         """Retrieve the mocked super user"""
         return MockSuperUser()
+
 
 class MockRequest:  # pylint: disable=too-few-public-methods
     """Fake request"""

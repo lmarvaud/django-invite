@@ -21,8 +21,8 @@ def join_and(listed):
     if not listed:
         return ''
     if len(listed) == 1:
-        return listed[0]
+        return str(listed[0])
     localized_and = " " + str(_('and')) + " "
     if len(listed) == 2:
-        return listed[0] + localized_and + listed[1]
-    return ', '.join(listed[:-1]) + localized_and + listed[-1]
+        return str(listed[0]) + localized_and + str(listed[1])
+    return ', '.join(listed[:-1]) + localized_and + str(listed[-1])

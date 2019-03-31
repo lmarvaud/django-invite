@@ -200,6 +200,32 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
         self.assertListEqual(list(recipient),
                              ["Françoise <valid@example.com>", "Jean <valid@example.com>"])
 
+    @override_settings(AUTHENTICATION_BACKENDS=["invite.tests.common.MockSuperUserBackend"])
+    def test_add_to_event_1(self):
+        """Test add_to_event action template"""
+        path = reverse("admin:invite_family_changelist")
+        self.client.force_login(MockSuperUser())
+
+        response = self.client.post(path, {"action": "add_to_event",
+                                           "_selected_action": [str(self.family.pk)],})
+
+        self.assertTemplateUsed(response, "admin/transitional_action.html")
+        self.assertIsInstance(response.context[0].dicts[-1]["form"], admin.AddToEventForm)
+
+    @override_settings(AUTHENTICATION_BACKENDS=["invite.tests.common.MockSuperUserBackend"])
+    def test_add_to_event_2(self):
+        """Test add_to_event action success"""
+        path = reverse("admin:invite_family_changelist")
+        self.client.force_login(MockSuperUser())
+        family2 = self.create_family("2")
+
+        response = self.client.post(path, {"action": "add_to_event",
+                                           "_confirm": "1",
+                                           "_selected_action": [str(family2.pk)],
+                                           "event": str(self.event.pk)})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(family2.invitations.filter(pk=self.event.pk).exists())
 
 class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint: disable=too-many-ancestors
     """Test Event Admin"""

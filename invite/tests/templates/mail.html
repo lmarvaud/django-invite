@@ -1,4 +1,4 @@
-Salut {{guests}},<br>
+{% load invite_extras %}Salut {{guests}},<br>
 <br>
 <br>
 Comment {{guests_count | pluralize:"vas tu,allez vous"}} ?<br>
@@ -14,3 +14,5 @@ Pour fêter ça, {{guests_count | pluralize:"tu es,vous êtes"}} convié{{e}}{{g
 <br>
 <br>
 {{family.host}}<br>
+<br>
+Emails : {{family.guests.all | attrgetter:'email' | join_and}}
