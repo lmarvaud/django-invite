@@ -7,7 +7,7 @@ from unittest import TestCase
 
 from datetime import date
 
-from invite.models import Guest, Accompany, Event
+from invite.models import Guest, Accompany, Event, JoinedDocument
 from invite.tests.common import TestFamilyMixin, TestEventMixin
 
 
@@ -15,6 +15,7 @@ class TestFamily(TestFamilyMixin, TestCase):
     """
     Test Family model
     """
+
     def test_context(self):
         """
         test context return value
@@ -63,6 +64,7 @@ class TestGuest(TestCase):
     """
     Test Guest model
     """
+
     def test_str(self):
         """
         test __str__ return value on Guest object
@@ -79,6 +81,7 @@ class TestAccompany(TestCase):
     """
     Test Accompany model
     """
+
     def test_str(self):
         """
         test __str__ return value on Accompany object
@@ -95,6 +98,7 @@ class TestEvent(TestEventMixin, TestCase):
     """
     Test Event model
     """
+
     def test_context(self):
         """
         test event context return value
@@ -155,3 +159,12 @@ class TestEvent(TestEventMixin, TestCase):
         event = Event(pk=1, name="Test", date=date(2018, 12, 31))
 
         self.assertEqual(str(event), expected_result)
+
+
+class TestJoinedDocument(TestCase):
+    """Test JoinedDocument model"""
+    def test_str(self):
+        """test __str__ return value"""
+        joined_document = JoinedDocument(name="test.txt")
+
+        self.assertEqual(str(joined_document), "cid:test.txt")

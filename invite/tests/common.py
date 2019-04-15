@@ -7,7 +7,9 @@ from datetime import date
 from os import path
 from unittest.mock import Mock
 
-from invite.models import Family, Guest, Accompany, Event, MailTemplate
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+from invite.models import Family, Guest, Accompany, Event, MailTemplate, JoinedDocument
 
 
 class TestFamilyMixin:
@@ -68,6 +70,23 @@ class TestMailTemplateMixin:  # pylint: disable=too-few-public-methods
     class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):
     ```
     """
+    expected_html = ("Salut Françoise and Jean,<br>\n<br>\n<br>\n"
+                     "Comment allez vous ?<br>\n<br>\n"
+                     "Comme vous le savez déjà, avec Jean, nous allons nous marier !<br>\n"
+                     "<br>\n"
+                     "Pour fêter ça, vous êtes conviés avec Michel and Michelle, "
+                     "<b>samedi 1er Juin</b> à Paris pour\n\n\n"
+                     "une soirée d'enfer !<br>\n<br>\n<b>Save the date !</b><br>\n<br>\n<br>\n"
+                     "Marie <img src=\"cid:happy.png\" /><br>\n"
+                     "<br>\n"
+                     "Emails : valid@example.com and valid@example.com")
+    expected_text = ("Salut Françoise and Jean,\n\n\n"
+                     "Comment allez vous ?\n\n"
+                     "Comme vous le savez déjà, avec Jean, nous allons nous marier !\n\n"
+                     "Pour fêter ça, vous êtes conviés avec Michel and Michelle, **samedi 1er "
+                     "Juin** à Paris pour une soirée d'enfer !\n\n"
+                     "**Save the date !**\n\n\n"
+                     "FJ\n")
     event = None
 
     def setUp(self):  # pylint: disable=invalid-name
@@ -79,31 +98,27 @@ class TestMailTemplateMixin:  # pylint: disable=too-few-public-methods
         html_template = open(path.join(path.dirname(__file__), "templates", "mail.html")).read()
         subject_template = open(path.join(path.dirname(__file__), "templates",
                                           "subject.txt")).read()
-        MailTemplate.objects.create(event=self.event, text=text_template, html=html_template,
-                                    subject=subject_template)
+        mail_template = MailTemplate.objects.create(event=self.event, text=text_template,
+                                                    html=html_template, subject=subject_template)
+        self.joined_document = JoinedDocument.objects.create(
+            document=SimpleUploadedFile("fake-file.txt", b"attachment\n"),
+            name="happy.png",
+            mimetype="image/png"
+        )
+        mail_template.joined_documents.add(self.joined_document)
+
+    def tearDown(self):  # pylint: disable=invalid-name
+        """
+        Delete the joined document
+        """
+        self.joined_document.document.delete()
+        super(TestMailTemplateMixin, self).tearDown()
 
 
 class TestEventMixin(TestFamilyMixin):
     """
     Test case mixin creating an event with a family
     """
-    expected_html = ("Salut Françoise and Jean,<br>\n<br>\n<br>\n"
-                     "Comment allez vous ?<br>\n<br>\n"
-                     "Comme vous le savez déjà, avec Jean, nous allons nous marier !<br>\n"
-                     "<br>\n"
-                     "Pour fêter ça, vous êtes conviés avec Michel and Michelle, "
-                     "<b>samedi 1er Juin</b> à Paris pour\n\n\n"
-                     "une soirée d'enfer !<br>\n<br>\n<b>Save the date !</b><br>\n<br>\n<br>\n"
-                     "Marie<br>\n"
-                     "<br>\n"
-                     "Emails : valid@example.com and valid@example.com")
-    expected_text = ("Salut Françoise and Jean,\n\n\n"
-                     "Comment allez vous ?\n\n"
-                     "Comme vous le savez déjà, avec Jean, nous allons nous marier !\n\n"
-                     "Pour fêter ça, vous êtes conviés avec Michel and Michelle, **samedi 1er "
-                     "Juin** à Paris pour une soirée d'enfer !\n\n"
-                     "**Save the date !**\n\n\n"
-                     "FJ\n")
     event = None
 
 

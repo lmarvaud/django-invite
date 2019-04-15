@@ -3,15 +3,20 @@ test_admin
 
 Created by lmarvaud on 03/11/2018
 """
+import os
 from collections import Iterable
 from unittest.mock import patch, Mock
 
 from django.contrib.admin import AdminSite
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.shortcuts import reverse
 from django.test import TestCase, override_settings
 
+import invite.forms
 from invite import admin
-from invite.models import Family, Guest, Event
+from invite.admin import JoinedDocumentAdmin
+from invite.forms import JoinedDocumentForm
+from invite.models import Family, Guest, Event, JoinedDocument
 from invite.tests.common import TestEventMixin, TestMailTemplateMixin, MockSuperUser, MockRequest
 
 
@@ -43,14 +48,16 @@ class TestMail(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint: disa
 
         self.assertEqual(len(to_send), 1)
         to_send = list(to_send[0])
-        self.assertEqual(len(to_send), 5)
-        subject, text, html, from_email, recipient = to_send
+        self.assertEqual(len(to_send), 6)
+        subject, text, html, from_email, recipient, join_attachment = to_send
         self.assertEqual(subject, expected_subject)
         self.assertEqual(text, self.expected_text)
         self.assertEqual(html, self.expected_html)
         self.assertIsNone(from_email)
         self.assertListEqual(list(recipient),
                              ["Françoise <valid@example.com>", "Jean <valid@example.com>"])
+        self.assertListEqual(list(join_attachment), [(self.joined_document.document.path,
+                                                      'happy.png', 'image/png')])
 
     @patch.object(admin, 'send_mass_html_mail')
     @override_settings(
@@ -164,14 +171,16 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
 
         self.assertEqual(len(to_send), 1)
         to_send = list(to_send[0])
-        self.assertEqual(len(to_send), 5)
-        subject, text, html, from_email, recipient = to_send
+        self.assertEqual(len(to_send), 6)
+        subject, text, html, from_email, recipient, join_attachment = to_send
         self.assertEqual(subject, expected_subject)
         self.assertEqual(text, self.expected_text)
         self.assertEqual(html, self.expected_html)
         self.assertIsNone(from_email)
         self.assertListEqual(list(recipient),
                              ["Françoise <valid@example.com>", "Jean <valid@example.com>"])
+        self.assertListEqual(list(join_attachment), [(self.joined_document.document.path,
+                                                      'happy.png', 'image/png')])
 
     @patch.object(admin, 'send_mass_html_mail')
     @override_settings(
@@ -210,7 +219,7 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
                                            "_selected_action": [str(self.family.pk)],})
 
         self.assertTemplateUsed(response, "admin/transitional_action.html")
-        self.assertIsInstance(response.context[0].dicts[-1]["form"], admin.AddToEventForm)
+        self.assertIsInstance(response.context[0].dicts[-1]["form"], invite.forms.AddToEventForm)
 
     @override_settings(AUTHENTICATION_BACKENDS=["invite.tests.common.MockSuperUserBackend"])
     def test_add_to_event_2(self):
@@ -305,14 +314,16 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
 
         self.assertEqual(len(to_send), 1)
         to_send = list(to_send[0])
-        self.assertEqual(len(to_send), 5)
-        subject, text, html, from_email, recipient = to_send
+        self.assertEqual(len(to_send), 6)
+        subject, text, html, from_email, recipient, join_attachment = to_send
         self.assertEqual(subject, expected_subject)
         self.assertEqual(text, self.expected_text)
         self.assertEqual(html, self.expected_html)
         self.assertIsNone(from_email)
         self.assertListEqual(list(recipient),
                              ["Françoise <valid@example.com>", "Jean <valid@example.com>"])
+        self.assertListEqual(list(join_attachment), [(self.joined_document.document.path,
+                                                      'happy.png', 'image/png')])
 
     @patch.object(admin, 'send_mass_html_mail')
     @override_settings(
@@ -386,3 +397,69 @@ class TestFamilyInvitationInlineWithoutTemplate(TestEventMixin, TestCase):
                 Event.families.through(family_id=1, event_id=self.event.pk, pk=1)),
             'The event has no email template set'
         )
+
+
+class TestJoinedDocumentAdmin(TestCase):
+    """Test joined document admin"""
+    def tearDown(self):
+        super(TestJoinedDocumentAdmin, self).tearDown()
+        path = os.path.join(JoinedDocument.document.field.upload_to, "test_without_document.txt")
+        JoinedDocument.document.field.storage.delete(path)
+        path = os.path.join(JoinedDocument.document.field.upload_to, "fake-file.txt")
+        JoinedDocument.document.field.storage.delete(path)
+
+    @patch.object(JoinedDocumentForm._meta, "model", JoinedDocument, create=True)  # pylint: disable=no-member
+    def test_form(self):
+        """test with a full filed form"""
+        self.assertEqual(JoinedDocumentAdmin.form, JoinedDocumentForm)
+        model_form = JoinedDocumentAdmin(JoinedDocument, Mock()).get_form(MockRequest())
+        form = model_form(
+            {"name": "name.txt"},
+            {"document": SimpleUploadedFile("fake-file.txt", b"attachment\n", 'text/javascript')}
+        )
+
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.instance.name, "name.txt")
+        self.assertEqual(form.instance.mimetype, "text/plain")
+        form.instance.document.file.seek(0)
+        self.assertEqual(form.instance.document.file.read(), b"attachment\n")
+
+    @patch("invite.forms.magic", None)
+    def test_without_libmagic(self):
+        """test with a full filed form libmagic is not installed"""
+        model_form = JoinedDocumentAdmin(JoinedDocument, Mock()).get_form(MockRequest())
+        form = model_form(
+            {"name": "name.txt"},
+            {"document": SimpleUploadedFile("fake-file.txt", b"attachment\n", 'text/javascript')}
+        )
+
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.instance.mimetype, "text/javascript")
+
+    def test_without_name(self):
+        """test with an incomplete form"""
+        model_form = JoinedDocumentAdmin(JoinedDocument, Mock()).get_form(MockRequest())
+        form = model_form(
+            {"name": ""},
+            {"document": SimpleUploadedFile("fake-file.txt", b"attachment\n", 'text/javascript')}
+        )
+
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.instance.name, "fake-file.txt")
+
+    def test_edit_without_name(self):
+        """test an edition with an incomplete form"""
+        joined_document = JoinedDocument.objects.create(
+            document=SimpleUploadedFile("fake-file.txt", b"attachment\n"),
+            name="att.txt",
+            mimetype="text/plain"
+        )
+        model_form = JoinedDocumentAdmin(JoinedDocument, Mock()).get_form(MockRequest())
+        form = model_form(
+            {"name": ""},
+            {},
+            instance=joined_document
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.instance.name, "fake-file.txt")

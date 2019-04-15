@@ -3,14 +3,14 @@ Admin configurations for django-invite project
 """
 from django.conf import settings
 from django.contrib import admin, messages
-from django.forms import BooleanField, ModelForm, ModelChoiceField
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 
+from invite.forms import JoinedDocumentForm, FamilyInvitationForm, AddToEventForm
 from invite.join_and import join_and
-from invite.transitional_form import TransitionalForm, transitional_form
-from .models import Family, Guest, Accompany, Event, MailTemplate
+from invite.transitional_form import transitional_form
+from .models import Family, Guest, Accompany, Event, MailTemplate, JoinedDocument
 from .send_mass_html_mail import send_mass_html_mail
 
 
@@ -30,11 +30,6 @@ class AccompanyInline(admin.TabularInline):
     model = Accompany
     extra = 1
     min_num = 0
-
-
-class FamilyInvitationForm(ModelForm):
-    """Form to permit Family Invitation to be sent"""
-    send_mail = BooleanField(label=_('Send the mail'), required=False)
 
 
 class FamilyInvitationInline(admin.TabularInline):
@@ -104,13 +99,6 @@ class FamilyInvitationModelAdminMixin(admin.ModelAdmin):
                                  _("%(result)d messages send") % {"result": send_result})
 
 
-class AddToEventForm(TransitionalForm):
-    """
-    Transitional Form to add families to an event
-    """
-    event = ModelChoiceField(queryset=Event.objects.all(), required=True)
-
-
 @admin.register(Family, site=admin.site)
 class FamilyAdmin(FamilyInvitationModelAdminMixin):
     """
@@ -174,3 +162,10 @@ class EventAdmin(FamilyInvitationModelAdminMixin):
         )
         self.message_user(request, _("%(result)d messages send") % {"result": result})
     send_mail.short_description = _("Send the email")
+
+
+@admin.register(JoinedDocument, site=admin.site)
+class JoinedDocumentAdmin(admin.ModelAdmin):
+    """Joined document admin view"""
+    readonly_fields = ["mimetype"]
+    form = JoinedDocumentForm

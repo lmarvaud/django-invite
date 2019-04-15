@@ -5,7 +5,7 @@ django_invite
 Django invite is an Application to help managing guest and invitation on django project
 
 Install
-========
+======
 
 Install the package ::
 
@@ -17,7 +17,7 @@ In your django project settings, add the "invite" app at the end of the installe
 
     INSTALLED_APP = [
         ...,
-	"<your app>",
+        "<your app>",
         "invite"
     ]
 
@@ -104,6 +104,19 @@ filter          example
 ``itemgetter``  ``{{family.guests | attrgetter:"name" | itemgetter:0 | join:","}}`` would display : ``M, J``
 ``join_and``    ``{{family.guests | attrgetter:"name" | join_and}}`` would display : ``Michelle and Jean``
 
+
+Joined images
+-------------
+
+In your mails you can add some embed images. To do so, add the image in the mail template, and in
+the html, in the image src set the prefix : `cid:` followed by the image name without the file
+extension.
+
+*Example*:
+
+For a file named `image.png` you should put : `cid:image`
+
+    <img src="cid:image_name_without_the_ext" alt="pxl" title="pxl" />
 
 `importguests` command
 ----------------------

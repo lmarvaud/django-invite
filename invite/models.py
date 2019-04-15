@@ -3,6 +3,7 @@ Data models configurations of django-invite project
 
 Created by lmarvaud on 03/11/2018
 """
+
 from django.conf import settings
 from django.db import models
 from django.db.models import Sum
@@ -170,6 +171,10 @@ class Event(models.Model):
                 "{} <{}>".format(*values)
                 for values in family.guests.values_list("name", "email")
                 if all(values)
+            ),
+            (
+                (joined_file.document.path, joined_file.name, joined_file.mimetype)
+                for joined_file in self.mailtemplate.joined_documents.all()  # pylint: disable=no-member
             )
         )
 
@@ -198,6 +203,18 @@ class Event(models.Model):
         verbose_name_plural = _("events")
 
 
+class JoinedDocument(models.Model):
+    """Document to join to the mails"""
+    objects = models.Manager()
+
+    document = models.FileField(upload_to='joins')
+    name = models.CharField(max_length=30, blank=True)
+    mimetype = models.CharField(max_length=30, null=False)
+
+    def __str__(self):
+        return "cid:%s" % self.name
+
+
 class MailTemplate(models.Model):
     """Event mail template"""
     objects = models.Manager()
@@ -206,6 +223,7 @@ class MailTemplate(models.Model):
     text = models.TextField(_("raw content"), blank=True)
     html = models.TextField(_("html content"), blank=True)
     event = models.OneToOneField(Event, models.CASCADE)
+    joined_documents = models.ManyToManyField(JoinedDocument, blank=True)
 
     @staticmethod
     def _render(template_string, context, request):
