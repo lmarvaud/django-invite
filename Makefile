@@ -10,7 +10,7 @@ ifneq (,$(wildcard ./.env))
 include .env
 endif
 
-all: venv database adminuser importguests runserver
+all: venv install database adminuser importguests runserver
 
 .PHONY: coverage-test
 coverage-test:
@@ -36,6 +36,13 @@ adminuser:
 database:
 	$(info init database)
 	@${PYTHON} ./manage.py migrate
+
+.PHONY: install
+install: install-pre-commit
+
+.PHONY: install-pre-commit
+install-pre-commit:
+	@${VIRTUAL_ENV}/bin/pre-commit install
 
 .PHONY: migrations
 migrations:

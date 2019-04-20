@@ -1,2 +1,3 @@
 pylint_django
 coverage
+pre-commit
