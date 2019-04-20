@@ -1,0 +1,5 @@
+[report]
+omit =
+    venv/*
+    **/test*.py
+    **/migrations/00*.py

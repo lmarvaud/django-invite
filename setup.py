@@ -34,11 +34,13 @@ setup(
     packages=find_packages(exclude=['demo']),
     include_package_data=True,
     install_requires=[
-        "django>2.1.2,<=2.1.7",
+        "django>2.1.5,<=2.1.7",
+        "Pillow==6.0.0",
         "pytz==2018.7"
     ],
     dependency_links=[
-        "django>2.1.2,<=2.1.7",
+        "django>2.1.5,<=2.1.7",
+        "Pillow==6.0.0",
         "pytz==2018.7"
     ],
 )

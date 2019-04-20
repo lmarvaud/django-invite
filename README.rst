@@ -32,6 +32,25 @@ Then update your database ::
 
     python manage.py migrate invite
 
+Run demo server
+===============
+
+Requirement
+-----------
+
+To run properly, for sure, you need to have install python3.5 however the project may work on all python3 versions.
+
+
+Install
+-------
+
+    make init
+
+Will init virtual env (in `./venv/`), a local database (sqlite), create an admin user (username=admin, password=admin)
+import some fake guests, and run the server in localhost : http://localhost:8000/admin/).
+
+
+
 Configuration
 =============
 
