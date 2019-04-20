@@ -14,8 +14,8 @@ class TestCheckInviteHostsSettings(TestCase):
     """Test checks on INVITE_HOSTS setting"""
     def test_valid(self):
         """Test checks with a valid INVITE_HOSTS setting"""
-        with patch.object(checks.settings, "INVITE_HOSTS", {
-                "valid": "valid@example.com",
+        with patch.object(checks.settings, 'INVITE_HOSTS', {
+                'valid': 'valid@example.com',
         }):
             result = checks.check_invite_hosts_settings(None)
 
@@ -23,17 +23,17 @@ class TestCheckInviteHostsSettings(TestCase):
 
     def test_missing(self):
         """Test checks with a missing INVITE_HOSTS setting"""
-        with patch.object(checks, "settings"):
+        with patch.object(checks, 'settings'):
             del checks.settings.INVITE_HOSTS
             result = checks.check_invite_hosts_settings(None)
 
             self.assertEqual(len(result), 1)
-            self.assertEqual(result[0].id, "INVITE_E001")
+            self.assertEqual(result[0].id, 'INVITE_E001')
 
     def test_type(self):
         """Test checks with an invalid INVITE_HOSTS setting type"""
-        with patch.object(checks.settings, "INVITE_HOSTS", []):
+        with patch.object(checks.settings, 'INVITE_HOSTS', []):
             result = checks.check_invite_hosts_settings(None)
 
             self.assertEqual(len(result), 1)
-            self.assertEqual(result[0].id, "INVITE_E002")
+            self.assertEqual(result[0].id, 'INVITE_E002')

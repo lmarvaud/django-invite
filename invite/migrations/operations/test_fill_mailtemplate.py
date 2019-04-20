@@ -13,8 +13,8 @@ from . import fill_mailtemplate
 from ...tests.common import TestEventMixin
 
 
-@patch.object(fill_mailtemplate, "get_template",
-              return_value=Mock(template=Mock(source="Template source")))
+@patch.object(fill_mailtemplate, 'get_template',
+              return_value=Mock(template=Mock(source='Template source')))
 class TestCode(TestEventMixin, TestCase):
     """
     Test fill_mailtemplate migration operations
@@ -27,9 +27,9 @@ class TestCode(TestEventMixin, TestCase):
         :param get_template_mock: the get_template function mock
         """
         get_template_mock.assert_has_calls([
-            call(("invite/subject.txt")),
-            call(("invite/mail.txt")),
-            call(("invite/mail.html")),
+            call(('invite/subject.txt')),
+            call(('invite/mail.txt')),
+            call(('invite/mail.html')),
         ])
 
     def test_code(self, get_template_mock: Mock):
@@ -42,9 +42,9 @@ class TestCode(TestEventMixin, TestCase):
 
         self.assert_get_template_has_calls(get_template_mock)
         self.assertTrue(self.event.has_mailtemplate)
-        self.assertEqual(self.event.mailtemplate.subject, "Template source")
-        self.assertEqual(self.event.mailtemplate.text, "Template source")
-        self.assertEqual(self.event.mailtemplate.html, "Template source")
+        self.assertEqual(self.event.mailtemplate.subject, 'Template source')
+        self.assertEqual(self.event.mailtemplate.text, 'Template source')
+        self.assertEqual(self.event.mailtemplate.html, 'Template source')
 
     def test_reverse_code(self, get_template_mock):
         """
@@ -52,8 +52,8 @@ class TestCode(TestEventMixin, TestCase):
 
         :param get_template_mock: the get_template function mock
         """
-        MailTemplate.objects.create(event=self.event, text="Template source",
-                                    html="Template source", subject="Template source")
+        MailTemplate.objects.create(event=self.event, text='Template source',
+                                    html='Template source', subject='Template source')
 
         fill_mailtemplate.reverse_code(apps)
         self.event.refresh_from_db()
@@ -67,8 +67,8 @@ class TestCode(TestEventMixin, TestCase):
 
         :param get_template_mock: the get_template function mock
         """
-        MailTemplate.objects.create(event=self.event, text="Modified source",
-                                    html="Modified source", subject="Modified source")
+        MailTemplate.objects.create(event=self.event, text='Modified source',
+                                    html='Modified source', subject='Modified source')
 
         fill_mailtemplate.reverse_code(apps)
         self.event.refresh_from_db()

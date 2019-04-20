@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 setup(
     name='django_invite',
     version='0.1.0',
-    description="Django application to help managing guest and invitation",
+    description='Django application to help managing guest and invitation',
     author='Leni Marvaud',
     author_email='24732919+lmarvaud@users.noreply.github.com',
     license='MIT',
@@ -34,13 +34,13 @@ setup(
     packages=find_packages(exclude=['demo']),
     include_package_data=True,
     install_requires=[
-        "django>2.1.5,<=2.1.7",
-        "Pillow==6.0.0",
-        "pytz==2018.7"
+        'django>2.1.5,<=2.1.7',
+        'Pillow==6.0.0',
+        'pytz==2018.7'
     ],
     dependency_links=[
-        "django>2.1.5,<=2.1.7",
-        "Pillow==6.0.0",
-        "pytz==2018.7"
+        'django>2.1.5,<=2.1.7',
+        'Pillow==6.0.0',
+        'pytz==2018.7'
     ],
 )

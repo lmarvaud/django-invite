@@ -35,7 +35,7 @@ def itemgetter(iter1, item):
     """
     return list(map(operator.itemgetter(item), iter1))
 
-@register.filter(name="join_and")
+@register.filter(name='join_and')
 def join_and_filter(lst):
     """
     additional template tag to concat a list with commas (", ") and a "and" operator (" and ")

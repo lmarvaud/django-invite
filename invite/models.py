@@ -14,7 +14,7 @@ from django.utils.translation import gettext as _
 
 from .join_and import join_and
 
-__all__ = ["Family", "Guest", "Accompany"]
+__all__ = ['Family', 'Guest', 'Accompany']
 
 
 class Family(models.Model):
@@ -29,11 +29,11 @@ class Family(models.Model):
     """
     objects = models.Manager()
 
-    invited_midday = models.BooleanField(verbose_name=_("is invite on lunch"), default=False)
-    invited_afternoon = models.BooleanField(verbose_name=_("is invite the afternoon"),
+    invited_midday = models.BooleanField(verbose_name=_('is invite on lunch'), default=False)
+    invited_afternoon = models.BooleanField(verbose_name=_('is invite the afternoon'),
                                             default=False)
-    invited_evening = models.BooleanField(verbose_name=_("is invite at the party"), default=True)
-    host = models.CharField(verbose_name=_("principal host"), max_length=32)
+    invited_evening = models.BooleanField(verbose_name=_('is invite at the party'), default=True)
+    host = models.CharField(verbose_name=_('principal host'), max_length=32)
 
     @cached_property
     def context(self):
@@ -43,32 +43,32 @@ class Family(models.Model):
         guests_count = self.guests.count()
         is_female = not self.guests.exclude(female=True).exists()
         accomanies_are_females = not self.accompanies.exclude(female=True).exists()
-        guests = join_and(list(self.guests.values_list("name", flat=True)))
-        accompanies = join_and(list(self.accompanies.values_list("name", flat=True)))
-        accompanies_count = self.accompanies.aggregate(Sum("number"))
-        accompanies_count = accompanies_count["number__sum"] or 0
+        guests = join_and(list(self.guests.values_list('name', flat=True)))
+        accompanies = join_and(list(self.accompanies.values_list('name', flat=True)))
+        accompanies_count = self.accompanies.aggregate(Sum('number'))
+        accompanies_count = accompanies_count['number__sum'] or 0
         has_accompany = accompanies_count >= 1
         has_accompanies = accompanies_count > 1
         context = {
-            "family": self,
-            "all": join_and(list(self.guests.values_list("name", flat=True)) +
-                            list(self.accompanies.values_list("name", flat=True))),
-            "count": guests_count + accompanies_count,
-            "accompanies": accompanies if accompanies_count else "",
-            "accompanies_e": "e" if accomanies_are_females else "",
-            "accompanies_count": accompanies_count,
-            "e": ("e" if is_female else ""),
-            "guests": guests,
-            "guests_count": guests_count,
-            "has_accompanies": has_accompanies,
-            "has_accompany": has_accompany,
-            "is_female": is_female,
-            "accompanies_are_female": accomanies_are_females,
+            'family': self,
+            'all': join_and(list(self.guests.values_list('name', flat=True)) +
+                            list(self.accompanies.values_list('name', flat=True))),
+            'count': guests_count + accompanies_count,
+            'accompanies': accompanies if accompanies_count else '',
+            'accompanies_e': 'e' if accomanies_are_females else '',
+            'accompanies_count': accompanies_count,
+            'e': ('e' if is_female else ''),
+            'guests': guests,
+            'guests_count': guests_count,
+            'has_accompanies': has_accompanies,
+            'has_accompany': has_accompany,
+            'is_female': is_female,
+            'accompanies_are_female': accomanies_are_females,
         }
         return context
 
     def __str__(self):
-        return str(_("%(all)s family") % {"all": self.context['all']})
+        return str(_('%(all)s family') % {'all': self.context['all']})
 
     def __format__(self, format_spec):
         """
@@ -80,12 +80,12 @@ class Family(models.Model):
         """
 
         if format_spec not in self.context:
-            raise ValueError("Invalid format specifier")
+            raise ValueError('Invalid format specifier')
         return ('{%s}' % format_spec).format(**self.context)
 
     class Meta:
-        verbose_name = _("family")
-        verbose_name_plural = _("families")
+        verbose_name = _('family')
+        verbose_name_plural = _('families')
 
 
 class Guest(models.Model):
@@ -94,18 +94,18 @@ class Guest(models.Model):
 
     A personalized email will be send to him/her/them
     """
-    family = models.ForeignKey(Family, models.CASCADE, "guests", verbose_name=_("family"),
+    family = models.ForeignKey(Family, models.CASCADE, 'guests', verbose_name=_('family'),
                                null=False)
-    female = models.BooleanField(verbose_name=_("is a female"), default=False)
-    name = models.CharField(verbose_name=_("name"), max_length=64)
-    email = models.EmailField(verbose_name=_("email address"), blank=True, null=True)
-    phone = models.CharField(verbose_name=_("phone number"), max_length=20, blank=True, default="")
+    female = models.BooleanField(verbose_name=_('is a female'), default=False)
+    name = models.CharField(verbose_name=_('name'), max_length=64)
+    email = models.EmailField(verbose_name=_('email address'), blank=True, null=True)
+    phone = models.CharField(verbose_name=_('phone number'), max_length=20, blank=True, default='')
 
     def __str__(self):
-        return "{name} <{email}>".format(name=self.name, email=self.email)
+        return '{name} <{email}>'.format(name=self.name, email=self.email)
 
     class Meta:
-        verbose_name = _("Guest")
+        verbose_name = _('Guest')
 
 
 class Accompany(models.Model):
@@ -114,17 +114,17 @@ class Accompany(models.Model):
 
     `number` field permit to join accompanies in on field, for "your children" for example
     """
-    family = models.ForeignKey(Family, models.CASCADE, "accompanies", verbose_name=_("family"),
+    family = models.ForeignKey(Family, models.CASCADE, 'accompanies', verbose_name=_('family'),
                                null=False)
-    female = models.BooleanField(verbose_name=_("is a female"), default=False)
-    name = models.CharField(verbose_name=_("name"), max_length=64)
-    number = models.IntegerField(verbose_name=_("number of person"), default=1)
+    female = models.BooleanField(verbose_name=_('is a female'), default=False)
+    name = models.CharField(verbose_name=_('name'), max_length=64)
+    number = models.IntegerField(verbose_name=_('number of person'), default=1)
 
     def __str__(self):
-        return "{name}".format(name=self.name)
+        return '{name}'.format(name=self.name)
 
     class Meta:
-        verbose_name = _("accompany")
+        verbose_name = _('accompany')
 
 class Event(models.Model):
     """
@@ -132,9 +132,9 @@ class Event(models.Model):
     """
     objects = models.Manager()
 
-    name = models.CharField(verbose_name=_("name"), max_length=64, blank=True, null=True)
-    date = models.DateField(verbose_name=_("date"), blank=True, null=True)
-    families = models.ManyToManyField("Family", "invitations", blank=True)
+    name = models.CharField(verbose_name=_('name'), max_length=64, blank=True, null=True)
+    date = models.DateField(verbose_name=_('date'), blank=True, null=True)
+    families = models.ManyToManyField('Family', 'invitations', blank=True)
 
     def context(self, family):
         """
@@ -142,7 +142,7 @@ class Event(models.Model):
         """
         context = family.context
         context.update({
-            "event": self
+            'event': self
         })
         return context
 
@@ -158,18 +158,18 @@ class Event(models.Model):
         email
         """
         context = self.context(family)
-        assert self.has_mailtemplate, "The event has no email template set"
+        assert self.has_mailtemplate, 'The event has no email template set'
         return (
             self.mailtemplate.render_subject(context=context, request=request),  # pylint: disable=no-member
             self.mailtemplate.render_text(context=context, request=request),  # pylint: disable=no-member
             self.mailtemplate.render_html(context=context, request=request),  # pylint: disable=no-member
-            "{} <{}>".format(family.host, settings.INVITE_HOSTS[family.host])
-            if (getattr(settings, "INVITE_USE_HOST_IN_FROM_EMAIL", False) and
+            '{} <{}>'.format(family.host, settings.INVITE_HOSTS[family.host])
+            if (getattr(settings, 'INVITE_USE_HOST_IN_FROM_EMAIL', False) and
                 family.host in settings.INVITE_HOSTS)
             else None,
             (
-                "{} <{}>".format(*values)
-                for values in family.guests.values_list("name", "email")
+                '{} <{}>'.format(*values)
+                for values in family.guests.values_list('name', 'email')
                 if all(values)
             ),
             (
@@ -182,25 +182,25 @@ class Event(models.Model):
     def has_mailtemplate(self) -> bool:
         """Determine wether the event has a mail template set or not yet"""
         try:
-            getattr(self, "mailtemplate")
+            getattr(self, 'mailtemplate')
         except Event.mailtemplate.RelatedObjectDoesNotExist:  # pylint: disable=no-member
             return False
         return True
 
     def __str__(self):
         if self.name and self.date:
-            result = _("%(name)s of the %(date)s") % {"name": self.name, "date": self.date}
+            result = _('%(name)s of the %(date)s') % {'name': self.name, 'date': self.date}
         elif self.name:
-            result = _("%(name)s") % {"name": self.name}
+            result = _('%(name)s') % {'name': self.name}
         elif self.date:
-            result = _("event of the %(date)s") % {"date": self.date}
+            result = _('event of the %(date)s') % {'date': self.date}
         else:
-            result = "{pk}".format(pk=self.pk)
+            result = '{pk}'.format(pk=self.pk)
         return result
 
     class Meta:
-        verbose_name = _("event")
-        verbose_name_plural = _("events")
+        verbose_name = _('event')
+        verbose_name_plural = _('events')
 
 
 class JoinedDocument(models.Model):
@@ -212,16 +212,16 @@ class JoinedDocument(models.Model):
     mimetype = models.CharField(max_length=30, null=False)
 
     def __str__(self):
-        return "cid:%s" % self.name
+        return 'cid:%s' % self.name
 
 
 class MailTemplate(models.Model):
     """Event mail template"""
     objects = models.Manager()
 
-    subject = models.CharField(_("subject"), max_length=512, blank=True)
-    text = models.TextField(_("raw content"), blank=True)
-    html = models.TextField(_("html content"), blank=True)
+    subject = models.CharField(_('subject'), max_length=512, blank=True)
+    text = models.TextField(_('raw content'), blank=True)
+    html = models.TextField(_('html content'), blank=True)
     event = models.OneToOneField(Event, models.CASCADE)
     joined_documents = models.ManyToManyField(JoinedDocument, blank=True)
 

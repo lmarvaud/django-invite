@@ -29,10 +29,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-DEFAULT_FROM_EMAIL = "invalid@example.com"
+DEFAULT_FROM_EMAIL = 'invalid@example.com'
 INVITE_HOSTS = OrderedDict(
-    Marie="marie@example.com",
-    Jean="jean@example.com",
+    Marie='marie@example.com',
+    Jean='jean@example.com',
 )
 
 EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'

@@ -21,19 +21,19 @@ class TestFamily(TestFamilyMixin, TestCase):
         test context return value
         """
         expected_result = {
-            "family": self.family,
-            "all": "Françoise, Jean, Michel and Michelle",
-            "count": 4,
-            "accompanies": "Michel and Michelle",
-            "accompanies_e": "",
-            "accompanies_count": 2,
-            "e": "",
-            "guests": "Françoise and Jean",
-            "guests_count": 2,
-            "has_accompanies": True,
-            "has_accompany": True,
-            "is_female": False,
-            "accompanies_are_female": False,
+            'family': self.family,
+            'all': 'Françoise, Jean, Michel and Michelle',
+            'count': 4,
+            'accompanies': 'Michel and Michelle',
+            'accompanies_e': '',
+            'accompanies_count': 2,
+            'e': '',
+            'guests': 'Françoise and Jean',
+            'guests_count': 2,
+            'has_accompanies': True,
+            'has_accompany': True,
+            'is_female': False,
+            'accompanies_are_female': False,
         }
 
         result = self.family.context
@@ -44,20 +44,20 @@ class TestFamily(TestFamilyMixin, TestCase):
         """
         test str return value
         """
-        self.assertEqual(self.family.__str__(), "Françoise, Jean, Michel and Michelle family")
+        self.assertEqual(self.family.__str__(), 'Françoise, Jean, Michel and Michelle family')
 
     def test_format(self):
         """
         test family format method
         """
-        self.assertEqual("{family:accompanies}".format(family=self.family),
-                         "Michel and Michelle")
+        self.assertEqual('{family:accompanies}'.format(family=self.family),
+                         'Michel and Michelle')
 
     def test_format_error(self):
         """
         test invalid family format
         """
-        self.assertRaises(ValueError, "{family:invalid}".format, family=self.family)
+        self.assertRaises(ValueError, '{family:invalid}'.format, family=self.family)
 
 
 class TestGuest(TestCase):
@@ -69,8 +69,8 @@ class TestGuest(TestCase):
         """
         test __str__ return value on Guest object
         """
-        guest = Guest(name="Jean", email="valid@example.com")
-        expected_result = "Jean <valid@example.com>"
+        guest = Guest(name='Jean', email='valid@example.com')
+        expected_result = 'Jean <valid@example.com>'
 
         result = str(guest)
 
@@ -86,8 +86,8 @@ class TestAccompany(TestCase):
         """
         test __str__ return value on Accompany object
         """
-        accompany = Accompany(name="Jean")
-        expected_result = "Jean"
+        accompany = Accompany(name='Jean')
+        expected_result = 'Jean'
 
         result = str(accompany)
 
@@ -104,20 +104,20 @@ class TestEvent(TestEventMixin, TestCase):
         test event context return value
         """
         expected_result = {
-            "event": self.event,
-            "family": self.family,
-            "all": "Françoise, Jean, Michel and Michelle",
-            "count": 4,
-            "accompanies": "Michel and Michelle",
-            "accompanies_e": "",
-            "accompanies_count": 2,
-            "e": "",
-            "guests": "Françoise and Jean",
-            "guests_count": 2,
-            "has_accompanies": True,
-            "has_accompany": True,
-            "is_female": False,
-            "accompanies_are_female": False,
+            'event': self.event,
+            'family': self.family,
+            'all': 'Françoise, Jean, Michel and Michelle',
+            'count': 4,
+            'accompanies': 'Michel and Michelle',
+            'accompanies_e': '',
+            'accompanies_count': 2,
+            'e': '',
+            'guests': 'Françoise and Jean',
+            'guests_count': 2,
+            'has_accompanies': True,
+            'has_accompany': True,
+            'is_female': False,
+            'accompanies_are_female': False,
         }
 
         result = self.event.context(self.family)
@@ -128,8 +128,8 @@ class TestEvent(TestEventMixin, TestCase):
         """
         test __str__ return value on Event object  without name nor date
         """
-        expected_result = "1"
-        event = Event(pk=1, name="", date=None)
+        expected_result = '1'
+        event = Event(pk=1, name='', date=None)
 
         self.assertEqual(str(event), expected_result)
 
@@ -137,8 +137,8 @@ class TestEvent(TestEventMixin, TestCase):
         """
         test __str__ return value on Event object without date
         """
-        expected_result = "Test"
-        event = Event(pk=1, name="Test", date=None)
+        expected_result = 'Test'
+        event = Event(pk=1, name='Test', date=None)
 
         self.assertEqual(str(event), expected_result)
 
@@ -146,8 +146,8 @@ class TestEvent(TestEventMixin, TestCase):
         """
         test __str__ return value on Event object without name
         """
-        expected_result = "event of the 2018-12-31"
-        event = Event(pk=1, name="", date=date(2018, 12, 31))
+        expected_result = 'event of the 2018-12-31'
+        event = Event(pk=1, name='', date=date(2018, 12, 31))
 
         self.assertEqual(str(event), expected_result)
 
@@ -155,8 +155,8 @@ class TestEvent(TestEventMixin, TestCase):
         """
         test __str__ return value on Event object
         """
-        expected_result = "Test of the 2018-12-31"
-        event = Event(pk=1, name="Test", date=date(2018, 12, 31))
+        expected_result = 'Test of the 2018-12-31'
+        event = Event(pk=1, name='Test', date=date(2018, 12, 31))
 
         self.assertEqual(str(event), expected_result)
 
@@ -165,6 +165,6 @@ class TestJoinedDocument(TestCase):
     """Test JoinedDocument model"""
     def test_str(self):
         """test __str__ return value"""
-        joined_document = JoinedDocument(name="test.txt")
+        joined_document = JoinedDocument(name='test.txt')
 
-        self.assertEqual(str(joined_document), "cid:test.txt")
+        self.assertEqual(str(joined_document), 'cid:test.txt')

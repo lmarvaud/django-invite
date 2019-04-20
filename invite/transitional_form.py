@@ -58,7 +58,7 @@ class TransitionalForm(Form):
     - _confirm: is use by the transition_form decorator to validate or not the form.
     """
     action = CharField(widget=HiddenInput)
-    _confirm = CharField(widget=HiddenInput, required=False, initial="1")
+    _confirm = CharField(widget=HiddenInput, required=False, initial='1')
     _selected_action = CharField(widget=HiddenInput)
 
 
@@ -73,24 +73,24 @@ def transitional_form(func=None, form_class: type = None):
     :param form_class: Form class to be transitioned retrieve
     :return: rendered admin/transitional_action.html template or func response
     """
-    assert issubclass(form_class, TransitionalForm), "The form_class must inherit from " \
-                                                     "TransitionalForm"
+    assert issubclass(form_class, TransitionalForm), 'The form_class must inherit from ' \
+                                                     'TransitionalForm'
     if not func:
         return partial(transitional_form, form_class=form_class)
 
     @wraps(func)
     def wrapper(self, request, queryset):
         form = form_class(request.POST)
-        if "_confirm" not in request.POST:
-            form.errors["event"] = {}
+        if '_confirm' not in request.POST:
+            form.errors['event'] = {}
         elif form.is_valid():
             return func(self, request, queryset, form)
         return render(
             request, 'admin/transitional_action.html',
             {
-                'form': form, "queryset": queryset, "opts": self.opts,
-                "action_short_description":
-                    getattr(wrapper, "short_description", func.__name__),
-                "action_name": func.__name__,
+                'form': form, 'queryset': queryset, 'opts': self.opts,
+                'action_short_description':
+                    getattr(wrapper, 'short_description', func.__name__),
+                'action_name': func.__name__,
             })
     return wrapper

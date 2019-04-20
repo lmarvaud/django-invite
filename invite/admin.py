@@ -34,7 +34,7 @@ class AccompanyInline(admin.TabularInline):
 
 class FamilyInvitationInline(admin.TabularInline):
     """Invitation families admin view"""
-    autocomplete_fields = ("family", "event")
+    autocomplete_fields = ('family', 'event')
     model = Event.families.through
     readonly_fields = ('show_mail',)
     form = FamilyInvitationForm
@@ -46,11 +46,11 @@ class FamilyInvitationInline(admin.TabularInline):
         """Extra field adding a link to preview the email"""
         if instance.pk:
             if instance.event.has_mailtemplate:
-                url = reverse('show_mail', kwargs={"event_id": instance.event_id,
-                                                   "family_id": instance.family_id})
-                return format_html(u'<a href="{}">{}</a>'.format(url, _("Preview the mail")))
-            return _("The event has no email template set")
-        return ""
+                url = reverse('show_mail', kwargs={'event_id': instance.event_id,
+                                                   'family_id': instance.family_id})
+                return format_html(u'<a href="{}">{}</a>'.format(url, _('Preview the mail')))
+            return _('The event has no email template set')
+        return ''
 
 
 class MailTemplateInline(admin.StackedInline):
@@ -84,7 +84,7 @@ class FamilyInvitationModelAdminMixin(admin.ModelAdmin):
         """Send the emails for a formset from a FamilyInvitationForm"""
         family_invitations = {(data['family'], data['event'])
                               for data in formset.cleaned_data
-                              if data and data["send_mail"]}
+                              if data and data['send_mail']}
         if family_invitations:
             to_send = (
                 event.gen_mass_email(family)
@@ -92,11 +92,11 @@ class FamilyInvitationModelAdminMixin(admin.ModelAdmin):
             )
             send_result = send_mass_html_mail(
                 to_send,
-                reply_to=["{host} <{email}>".format(host=host, email=settings.INVITE_HOSTS[host])
+                reply_to=['{host} <{email}>'.format(host=host, email=settings.INVITE_HOSTS[host])
                           for host in settings.INVITE_HOSTS]
             )
             messages.add_message(request, messages.INFO,
-                                 _("%(result)d messages send") % {"result": send_result})
+                                 _('%(result)d messages send') % {'result': send_result})
 
 
 @admin.register(Family, site=admin.site)
@@ -107,8 +107,8 @@ class FamilyAdmin(FamilyInvitationModelAdminMixin):
     This view use FamilyInvitationInline to send an initation to a selection of guests
     """
     inlines = [InviteInline, AccompanyInline] + FamilyInvitationModelAdminMixin.inlines
-    search_fields = ("guests__name", "accompanies__name")
-    actions = ["add_to_event"]
+    search_fields = ('guests__name', 'accompanies__name')
+    actions = ['add_to_event']
 
     @transitional_form(form_class=AddToEventForm)
     def add_to_event(self, request, families, form):  # pylint: disable=no-self-use
@@ -131,8 +131,8 @@ class EventAdmin(FamilyInvitationModelAdminMixin):
     This view use FamilyInvitationInline to send an initation to a selection of guests
     """
     exclude = ('families', )
-    actions = ["send_mail"]
-    search_fields = ("name", "date")
+    actions = ['send_mail']
+    search_fields = ('name', 'date')
     inlines = [MailTemplateInline] + FamilyInvitationModelAdminMixin.inlines
 
     def send_mail(self, request, events):
@@ -146,8 +146,8 @@ class EventAdmin(FamilyInvitationModelAdminMixin):
         """
         events_without_mail = [str(event) for event in events if not event.has_mailtemplate]
         if events_without_mail:
-            self.message_user(request, _("The %(events)s has no email template set") %
-                              {"events": join_and(events_without_mail)},
+            self.message_user(request, _('The %(events)s has no email template set') %
+                              {'events': join_and(events_without_mail)},
                               messages.ERROR)
             return
         to_send = (
@@ -157,15 +157,15 @@ class EventAdmin(FamilyInvitationModelAdminMixin):
         )
         result = send_mass_html_mail(
             to_send,
-            reply_to=["{host} <{email}>".format(host=host, email=settings.INVITE_HOSTS[host])
+            reply_to=['{host} <{email}>'.format(host=host, email=settings.INVITE_HOSTS[host])
                       for host in settings.INVITE_HOSTS]
         )
-        self.message_user(request, _("%(result)d messages send") % {"result": result})
-    send_mail.short_description = _("Send the email")
+        self.message_user(request, _('%(result)d messages send') % {'result': result})
+    send_mail.short_description = _('Send the email')
 
 
 @admin.register(JoinedDocument, site=admin.site)
 class JoinedDocumentAdmin(admin.ModelAdmin):
     """Joined document admin view"""
-    readonly_fields = ["mimetype"]
+    readonly_fields = ['mimetype']
     form = JoinedDocumentForm

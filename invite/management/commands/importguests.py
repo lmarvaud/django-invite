@@ -20,17 +20,17 @@ from ...join_and import join_and
 from ...models import Family, Guest, Accompany, Event
 
 MANY_LIST = ['children', 'girls', 'boys', 'colleges']
-EMAIL_KEY = "Email"
-PHONE_KEY = "Phone"
-HOST_KEY = "Host"
-GENDER_KEY = "Gender"
-SURNAME_KEY = "Surname"
-ACCOMPANY_KEY = "Accompany surname"
+EMAIL_KEY = 'Email'
+PHONE_KEY = 'Phone'
+HOST_KEY = 'Host'
+GENDER_KEY = 'Gender'
+SURNAME_KEY = 'Surname'
+ACCOMPANY_KEY = 'Accompany surname'
 
 
 def strip(listed):
     """Strip a list of string"""
-    return map(operator.methodcaller("strip"), listed)
+    return map(operator.methodcaller('strip'), listed)
 
 
 def multi_split(string, *seps):
@@ -49,11 +49,11 @@ def _create_guests(line):
     names = list(strip(multi_split(line[SURNAME_KEY], ',', ' et ', '&')))
     for i, name in enumerate(names):
         if i > len(gender):
-            logging.warning("missing gender to %s : SKIPPED", name)
+            logging.warning('missing gender to %s : SKIPPED', name)
         else:
             yield Guest(name=name,
                         email=emails[i] if len(emails) > i else None,
-                        phone=phones[i] if len(phones) > i else "",
+                        phone=phones[i] if len(phones) > i else '',
                         female=gender[i].upper() == 'F')
 
 
@@ -99,7 +99,7 @@ csv format is like::
 
     "","ignored", "", "", "", ""
     """
-    help = _("Import guests from a csv file")
+    help = _('Import guests from a csv file')
 
     def create_parser(self, prog_name, subcommand):
         parser = super(Command, self).create_parser(prog_name=prog_name, subcommand=subcommand)
@@ -108,18 +108,18 @@ csv format is like::
         return parser
 
     def add_arguments(self, parser: CommandParser):
-        invitation = parser.add_argument_group(_("Event"),
-                                               _("Create an link imported guests to an event"))
-        invitation.add_argument("--date", dest="event_date", type=parse_date,
-                                help=_("date of the event"))
-        invitation.add_argument("--name", dest="event_name", type=str,
-                                help=_("name of the event"))
-        parser.add_argument("csv", help=_("path to the csv file to parse"))
+        invitation = parser.add_argument_group(_('Event'),
+                                               _('Create an link imported guests to an event'))
+        invitation.add_argument('--date', dest='event_date', type=parse_date,
+                                help=_('date of the event'))
+        invitation.add_argument('--name', dest='event_name', type=str,
+                                help=_('name of the event'))
+        parser.add_argument('csv', help=_('path to the csv file to parse'))
 
     def handle(self, *args, **options):
         """Process to the parsing of the csv"""
         event = self.create_event(**options)
-        with open(options["csv"], 'r') as csv_file:
+        with open(options['csv'], 'r') as csv_file:
             csv_reader = csv.DictReader(csv_file, [
                 EMAIL_KEY, PHONE_KEY, HOST_KEY, GENDER_KEY, SURNAME_KEY, ACCOMPANY_KEY
             ])
@@ -128,14 +128,14 @@ csv format is like::
             afternoon = True
             evening = True
             for line in csv_reader:
-                if line[SURNAME_KEY] == "Sous-total":
+                if line[SURNAME_KEY] == 'Sous-total':
                     if midday:
                         midday = False
                     else:
                         afternoon = False
                 if line[EMAIL_KEY]:
                     if line[HOST_KEY] and line[HOST_KEY] not in settings.INVITE_HOSTS:
-                        logging.warning("%s source not referenced in the setting INVITE_HOSTS",
+                        logging.warning('%s source not referenced in the setting INVITE_HOSTS',
                                         line[HOST_KEY])
                     host = line[HOST_KEY] if line[HOST_KEY] in settings.INVITE_HOSTS else \
                         join_and(list(settings.INVITE_HOSTS.keys()))
@@ -163,8 +163,8 @@ csv format is like::
         if event_date or event_name:
             params = {}
             if event_date:
-                params["date"] = event_date
+                params['date'] = event_date
             if event_name:
-                params["name"] = event_name
+                params['name'] = event_name
             invitation = Event.objects.create(**params)
         return invitation

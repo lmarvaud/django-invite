@@ -19,7 +19,7 @@ class TestFamilyMixin:
     family = None
 
     @staticmethod
-    def create_family(name_suffix: str = ""):
+    def create_family(name_suffix: str = ''):
         """
         Create a family with 2 guests and 2 accompanies
 
@@ -30,17 +30,17 @@ class TestFamilyMixin:
         :param host:
         :return:
         """
-        family = Family.objects.create(host="Marie")
+        family = Family.objects.create(host='Marie')
         family.guests.add(
-            Guest(name="Françoise%s" % name_suffix, email="valid@example.com", phone="0123456789",
+            Guest(name='Françoise%s' % name_suffix, email='valid@example.com', phone='0123456789',
                   female=True),
-            Guest(name="Jean%s" % name_suffix, email="valid@example.com", phone="0123456789",
+            Guest(name='Jean%s' % name_suffix, email='valid@example.com', phone='0123456789',
                   female=False),
             bulk=False
         )
         family.accompanies.add(
-            Accompany(name="Michel%s" % name_suffix, number=1),
-            Accompany(name="Michelle%s" % name_suffix, number=1),
+            Accompany(name='Michel%s' % name_suffix, number=1),
+            Accompany(name='Michelle%s' % name_suffix, number=1),
             bulk=False
         )
         return family
@@ -70,23 +70,23 @@ class TestMailTemplateMixin:  # pylint: disable=too-few-public-methods
     class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):
     ```
     """
-    expected_html = ("Salut Françoise and Jean,<br>\n<br>\n<br>\n"
-                     "Comment allez vous ?<br>\n<br>\n"
-                     "Comme vous le savez déjà, avec Jean, nous allons nous marier !<br>\n"
-                     "<br>\n"
-                     "Pour fêter ça, vous êtes conviés avec Michel and Michelle, "
-                     "<b>samedi 1er Juin</b> à Paris pour\n\n\n"
+    expected_html = ('Salut Françoise and Jean,<br>\n<br>\n<br>\n'
+                     'Comment allez vous ?<br>\n<br>\n'
+                     'Comme vous le savez déjà, avec Jean, nous allons nous marier !<br>\n'
+                     '<br>\n'
+                     'Pour fêter ça, vous êtes conviés avec Michel and Michelle, '
+                     '<b>samedi 1er Juin</b> à Paris pour\n\n\n'
                      "une soirée d'enfer !<br>\n<br>\n<b>Save the date !</b><br>\n<br>\n<br>\n"
                      "Marie <img src=\"cid:happy.png\" /><br>\n"
-                     "<br>\n"
-                     "Emails : valid@example.com and valid@example.com")
-    expected_text = ("Salut Françoise and Jean,\n\n\n"
-                     "Comment allez vous ?\n\n"
-                     "Comme vous le savez déjà, avec Jean, nous allons nous marier !\n\n"
-                     "Pour fêter ça, vous êtes conviés avec Michel and Michelle, **samedi 1er "
+                     '<br>\n'
+                     'Emails : valid@example.com and valid@example.com')
+    expected_text = ('Salut Françoise and Jean,\n\n\n'
+                     'Comment allez vous ?\n\n'
+                     'Comme vous le savez déjà, avec Jean, nous allons nous marier !\n\n'
+                     'Pour fêter ça, vous êtes conviés avec Michel and Michelle, **samedi 1er '
                      "Juin** à Paris pour une soirée d'enfer !\n\n"
-                     "**Save the date !**\n\n\n"
-                     "FJ\n")
+                     '**Save the date !**\n\n\n'
+                     'FJ\n')
     event = None
 
     def setUp(self):  # pylint: disable=invalid-name
@@ -94,16 +94,16 @@ class TestMailTemplateMixin:  # pylint: disable=too-few-public-methods
         Create a mail template for the event test case event
         """
         super(TestMailTemplateMixin, self).setUp()
-        text_template = open(path.join(path.dirname(__file__), "templates", "mail.txt")).read()
-        html_template = open(path.join(path.dirname(__file__), "templates", "mail.html")).read()
-        subject_template = open(path.join(path.dirname(__file__), "templates",
-                                          "subject.txt")).read()
+        text_template = open(path.join(path.dirname(__file__), 'templates', 'mail.txt')).read()
+        html_template = open(path.join(path.dirname(__file__), 'templates', 'mail.html')).read()
+        subject_template = open(path.join(path.dirname(__file__), 'templates',
+                                          'subject.txt')).read()
         mail_template = MailTemplate.objects.create(event=self.event, text=text_template,
                                                     html=html_template, subject=subject_template)
         self.joined_document = JoinedDocument.objects.create(
-            document=SimpleUploadedFile("fake-file.txt", b"attachment\n"),
-            name="happy.png",
-            mimetype="image/png"
+            document=SimpleUploadedFile('fake-file.txt', b'attachment\n'),
+            name='happy.png',
+            mimetype='image/png'
         )
         mail_template.joined_documents.add(self.joined_document)
 
@@ -123,7 +123,7 @@ class TestEventMixin(TestFamilyMixin):
 
 
     @staticmethod
-    def create_event(*family, name="test"):
+    def create_event(*family, name='test'):
         """Create an event with family"""
         event = Event.objects.create(name=name, date=date(2018, 12, 31))
         event.families.add(*family)
@@ -153,7 +153,7 @@ class MockSuperUser:  # pylint: disable=too-few-public-methods
     _meta = Mock(
         pk=Mock(
             value_to_string=Mock(
-                return_value="1"))
+                return_value='1'))
     )
 
     @staticmethod
@@ -190,7 +190,7 @@ class MockSuperUserBackend:  # pylint: disable=too-few-public-methods
 class MockRequest:  # pylint: disable=too-few-public-methods
     """Fake request"""
     _instance = None
-    method = "GET"
+    method = 'GET'
 
     def __init__(self):
         """Initialize the user"""
