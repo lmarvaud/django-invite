@@ -14,6 +14,8 @@ repos:
     -   id: debug-statements
     -   id: detect-private-key
     -   id: double-quote-string-fixer
+    -   id: end-of-file-fixer
+        exclude: "subject.txt"
     -   id: name-tests-test
         args: [--django]
     -   id: requirements-txt-fixer

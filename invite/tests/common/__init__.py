@@ -79,7 +79,7 @@ class TestMailTemplateMixin:  # pylint: disable=too-few-public-methods
                      "une soirée d'enfer !<br>\n<br>\n<b>Save the date !</b><br>\n<br>\n<br>\n"
                      "Marie <img src=\"cid:happy.png\" /><br>\n"
                      '<br>\n'
-                     'Emails : valid@example.com and valid@example.com')
+                     'Emails : valid@example.com and valid@example.com\n')
     expected_text = ('Salut Françoise and Jean,\n\n\n'
                      'Comment allez vous ?\n\n'
                      'Comme vous le savez déjà, avec Jean, nous allons nous marier !\n\n'
