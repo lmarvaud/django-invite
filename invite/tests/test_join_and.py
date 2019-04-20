@@ -12,6 +12,7 @@ class TestJoinAnd(TestCase):
     """
     test invite.join_and function
     """
+
     def test_join_and_empty(self):
         """test invite.join_and function without names"""
         self.assertEqual(join_and([]), '')

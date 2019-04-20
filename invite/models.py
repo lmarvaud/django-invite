@@ -126,6 +126,7 @@ class Accompany(models.Model):
     class Meta:
         verbose_name = _('accompany')
 
+
 class Event(models.Model):
     """
     Invitation event
@@ -160,9 +161,12 @@ class Event(models.Model):
         context = self.context(family)
         assert self.has_mailtemplate, 'The event has no email template set'
         return (
-            self.mailtemplate.render_subject(context=context, request=request),  # pylint: disable=no-member
-            self.mailtemplate.render_text(context=context, request=request),  # pylint: disable=no-member
-            self.mailtemplate.render_html(context=context, request=request),  # pylint: disable=no-member
+            self.mailtemplate.render_subject(  # pylint: disable=no-member
+                context=context, request=request),
+            self.mailtemplate.render_text(  # pylint: disable=no-member
+                context=context, request=request),
+            self.mailtemplate.render_html(  # pylint: disable=no-member
+                context=context, request=request),
             '{} <{}>'.format(family.host, settings.INVITE_HOSTS[family.host])
             if (getattr(settings, 'INVITE_USE_HOST_IN_FROM_EMAIL', False) and
                 family.host in settings.INVITE_HOSTS)

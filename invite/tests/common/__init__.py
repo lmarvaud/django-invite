@@ -121,7 +121,6 @@ class TestEventMixin(TestFamilyMixin):
     """
     event = None
 
-
     @staticmethod
     def create_event(*family, name='test'):
         """Create an event with family"""

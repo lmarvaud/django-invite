@@ -31,6 +31,7 @@ class FamilyInvitationForm(ModelForm):
 
 class JoinedDocumentForm(ModelForm):
     """Form to set joined document default name and mimetype"""
+
     def clean_name(self):
         """Set the file default name"""
         if 'name' in self.cleaned_data and self.cleaned_data['name']:

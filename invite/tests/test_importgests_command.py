@@ -16,6 +16,7 @@ class TestCommand(TestCase):
     """
     Test django_invite importguests command
     """
+
     def tearDown(self):
         family = Family.objects.last()
         if family:

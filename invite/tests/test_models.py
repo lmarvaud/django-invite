@@ -163,6 +163,7 @@ class TestEvent(TestEventMixin, TestCase):
 
 class TestJoinedDocument(TestCase):
     """Test JoinedDocument model"""
+
     def test_str(self):
         """test __str__ return value"""
         joined_document = JoinedDocument(name='test.txt')

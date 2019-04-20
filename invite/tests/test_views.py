@@ -14,6 +14,7 @@ from invite.views import show_mail_txt, show_mail_html
 
 class TestShowMailTxt(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint: disable=too-many-ancestors
     """test show_mail_txt view"""
+
     def test_show_mail_txt(self):
         """test with success"""
         result = show_mail_txt(MockRequest.instance(), self.event.pk, self.family.pk)
@@ -50,7 +51,6 @@ class TestShowMailTxt(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
         ))
 
         self.assertEqual(result.status_code, 400)
-
 
 
 class TestShowMailHtml(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint: disable=too-many-ancestors

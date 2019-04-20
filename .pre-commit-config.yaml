@@ -17,6 +17,11 @@ repos:
     -   id: name-tests-test
         args: [--django]
     -   id: requirements-txt-fixer
+-   repo: https://github.com/pre-commit/mirrors-autopep8
+    rev: v1.4.3
+    hooks:
+    -   id: autopep8
+        args: [--in-place, --max-line-length, "100"]
 -   repo: local
     hooks:
     -   id: pylint

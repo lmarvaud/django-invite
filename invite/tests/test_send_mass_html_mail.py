@@ -15,6 +15,7 @@ from invite.send_mass_html_mail import send_mass_html_mail
 
 class TestSendMassHtmlMail(TestCase):
     """Test send_mass_html_mail"""
+
     def test(self):
         """Test send_mass_html_mail"""
         send_mass_html_mail([

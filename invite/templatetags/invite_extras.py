@@ -23,6 +23,7 @@ def attrgetter(iter1, attr):
     """
     return list(map(operator.attrgetter(attr), iter1))
 
+
 @register.filter
 def itemgetter(iter1, item):
     """
@@ -34,6 +35,7 @@ def itemgetter(iter1, item):
     If **value** contains the list `[["a", "b"], ["c", "d"]]`, the result will be `["b", "d"]`
     """
     return list(map(operator.itemgetter(item), iter1))
+
 
 @register.filter(name='join_and')
 def join_and_filter(lst):

@@ -93,6 +93,7 @@ class TestMail(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint: disa
 
 class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint: disable=too-many-ancestors
     """Test Family Admin"""
+
     def setUp(self):
         super(TestFamilyAdmin, self).setUp()
         self.event2 = self.create_event(self.family, name='test2')
@@ -216,7 +217,7 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
         self.client.force_login(MockSuperUser())
 
         response = self.client.post(path, {'action': 'add_to_event',
-                                           '_selected_action': [str(self.family.pk)],})
+                                           '_selected_action': [str(self.family.pk)], })
 
         self.assertTemplateUsed(response, 'admin/transitional_action.html')
         self.assertIsInstance(response.context[0].dicts[-1]['form'], invite.forms.AddToEventForm)
@@ -236,8 +237,10 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
         self.assertEqual(response.status_code, 302)
         self.assertTrue(family2.invitations.filter(pk=self.event.pk).exists())
 
+
 class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint: disable=too-many-ancestors
     """Test Event Admin"""
+
     def setUp(self):
         super(TestEventAdmin, self).setUp()
         self.site = AdminSite()
@@ -367,6 +370,7 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
 
 class TestFamilyInvitationInline(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint: disable=too-many-ancestors
     """Test FamilyInvitationInline"""
+
     def test_get_fields(self):
         """Test displayed fields"""
         site = AdminSite()
@@ -390,6 +394,7 @@ class TestFamilyInvitationInline(TestMailTemplateMixin, TestEventMixin, TestCase
 
 class TestFamilyInvitationInlineWithoutTemplate(TestEventMixin, TestCase):
     """Test FamilyInvitationInline"""
+
     def test_show_mail(self):
         """Test show_mail function"""
         self.assertEqual(
@@ -401,6 +406,7 @@ class TestFamilyInvitationInlineWithoutTemplate(TestEventMixin, TestCase):
 
 class TestJoinedDocumentAdmin(TestCase):
     """Test joined document admin"""
+
     def tearDown(self):
         super(TestJoinedDocumentAdmin, self).tearDown()
         path = os.path.join(JoinedDocument.document.field.upload_to, 'test_without_document.txt')

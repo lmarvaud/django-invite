@@ -25,6 +25,7 @@ def show_mail_html(request, event_id, family_id):
     response = replace.sub('cid-', response)
     return HttpResponse(response)
 
+
 @login_required
 @require_safe
 def show_mail_txt(request, event_id, family_id):
@@ -35,6 +36,7 @@ def show_mail_txt(request, event_id, family_id):
     family = get_object_or_404(Family, id=family_id)
     response = event.mailtemplate.render_text(context=event.context(family), request=request)
     return HttpResponse(response)
+
 
 @login_required
 @require_safe

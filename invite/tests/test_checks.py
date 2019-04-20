@@ -12,6 +12,7 @@ from .. import checks
 
 class TestCheckInviteHostsSettings(TestCase):
     """Test checks on INVITE_HOSTS setting"""
+
     def test_valid(self):
         """Test checks with a valid INVITE_HOSTS setting"""
         with patch.object(checks.settings, 'INVITE_HOSTS', {
