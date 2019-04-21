@@ -231,7 +231,9 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
                                            '_selected_action': [str(self.family.pk)], })
 
         self.assertTemplateUsed(response, 'admin/transitional_action.html')
-        self.assertIsInstance(response.context[0].dicts[-1]['form'], invite.forms.AddToEventForm)
+        form = response.context.get('form')
+        self.assertIsInstance(form, invite.forms.AddToEventForm)
+        self.assertFalse(any(form.errors.values()))
 
     @override_settings(AUTHENTICATION_BACKENDS=['invite.tests.common.MockSuperUserBackend'])
     def test_add_to_event_2(self):
@@ -247,6 +249,26 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
 
         self.assertEqual(response.status_code, 302)
         self.assertTrue(family2.invitations.filter(pk=self.event.pk).exists())
+
+    @override_settings(AUTHENTICATION_BACKENDS=['invite.tests.common.MockSuperUserBackend'])
+    def test_add_to_event_3(self):
+        """Test add_to_event with invalid form"""
+        path = reverse('admin:invite_family_changelist')
+        self.client.force_login(MockSuperUser())
+        family2 = self.create_family('2')
+
+        response = self.client.post(path, {'action': 'add_to_event',
+                                           '_confirm': '1',
+                                           '_selected_action': [str(family2.pk)],
+                                           'event': ''})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin/transitional_action.html')
+        form = response.context.get('form')
+        self.assertIsInstance(form, invite.forms.AddToEventForm)
+        self.assertTrue(any(form.errors.values()))
+        self.assertIn('event', form.errors)
+        self.assertEqual(form.errors['event'].data[0].code, 'required')
 
 
 class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint: disable=too-many-ancestors
