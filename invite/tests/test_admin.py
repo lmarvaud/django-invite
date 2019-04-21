@@ -120,7 +120,7 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
 
     @override_settings(CSRF_HEADER_NAME='CSRF_HEADER_NAME', CSRF_COOKIE_NAME='CSRF_COOKIE_NAME',
                        AUTHENTICATION_BACKENDS=['invite.tests.common.MockSuperUserBackend'])
-    def _send_form(self):
+    def _send_form(self, send_mail=True):
         """
         Mixin function to send email on the formset with cleaned data
         """
@@ -131,7 +131,6 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
             'Event_families-0-family': self.family.pk,
             'Event_families-0-id':
                 event_families_id.filter(event=self.event, family=self.family).first(),
-            'Event_families-0-send_mail': 'on',
             'Event_families-1-event': self.event2.pk,
             'Event_families-1-family': self.family.pk,
             'Event_families-1-id':
@@ -147,6 +146,8 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
             'accompanies-INITIAL_FORMS': '0',
             'accompanies-TOTAL_FORMS': '0',
         }
+        if send_mail:
+            data['Event_families-0-send_mail'] = 'on'
         self.client.force_login(MockSuperUser())
         with patch.object(admin.FamilyAdmin, 'log_change'):
             self.client.post(path, data=data)
@@ -209,6 +210,16 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
         recipient = list(send_mass_html_mail__mock.call_args[0][0])[0][4]
         self.assertListEqual(list(recipient),
                              ['Françoise <valid@example.com>', 'Jean <valid@example.com>'])
+
+    @patch.object(admin, 'messages')
+    @patch.object(admin, 'send_mass_html_mail')
+    def test_send_form_without_email(self, send_mass_html_mail__mock: Mock,
+                                     messages_mock: Mock):
+        """Check that no mail is sent if no family is selected by sending the family admin form"""
+        self._send_form(False)
+
+        self.assertEqual(send_mass_html_mail__mock.call_count, 0)
+        self.assertEqual(messages_mock.add_message.call_count, 0)
 
     @override_settings(AUTHENTICATION_BACKENDS=['invite.tests.common.MockSuperUserBackend'])
     def test_add_to_event_1(self):
