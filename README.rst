@@ -1,5 +1,11 @@
-.. image:: https://travis-ci.org/lmarvaud/django-invite.svg?branch=master
-    :target: https://travis-ci.org/lmarvaud/django-invite
+|CI status|_ |Coverage status|_
+
+
+.. |CI status| image:: https://travis-ci.org/lmarvaud/django-invite.svg?branch=master
+.. _`CI status`: https://travis-ci.org/lmarvaud/django-invite
+
+.. |Coverage status| image:: https://codecov.io/gh/lmarvaud/django-invite/branch/master/graph/badge.svg
+.. _`Coverage status`: https://codecov.io/gh/lmarvaud/django-invite
 
 =============
 django_invite
