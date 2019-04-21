@@ -67,49 +67,46 @@ Threw the admin or threw the command line (cf. `importguests command`_) ::
 Email
 -----
 
-To configure the email to be sent, in your project create the files :
+To configure the email to be sent, create an event en fill the *Mail templates* with your
+contents.
 
-- ``/<your app>/templates/invite/mail.html``
-- ``/<your app>/templates/invite/mail.txt``
-- ``/<your app>/templates/invite/subject.txt``
+Template are some `django templates`__ where existing variables are :
 
-And fill them with your content.
+__ https://docs.djangoproject.com/en/2.2/topics/templates/
 
-Existing variables are :
-
-============================== ============================================
-Template variables             Description
-============================== ============================================
+================================ ============================================
+Template variables               Description
+================================ ============================================
 **Event**
----------------------------------------------------------------------------
-``{event}``                    An event object containing next arguments
-``{event.name}``               The event name (optionnal)
-``{event.date}``               The event date (optionnal)
+-----------------------------------------------------------------------------
+``{{event}}``                    An event object containing next arguments
+``{{event.name}}``               The event name (optionnal)
+``{{event.date}}``               The event date (optionnal)
 **Family**
----------------------------------------------------------------------------
-``{family}``                   A family object containing next arguments
-``{family.invited_midday}``    Boolean to invite the members on the 1st part of the event
-``{family.invited_afternoon}`` Boolean to invite the members on the 2nd part of the event
-``{family.invited_evening}``   Boolean to invite the members on the 3rd part of the event
-``{family.host}``              The person that host the family
-``{family.guests}``            The guest list
-``{family.accompanies}``       The accompany list
+-----------------------------------------------------------------------------
+``{{family}}``                   A family object containing next arguments
+``{{family.invited_midday}}``    Boolean to invite the members on the 1st part of the event
+``{{family.invited_afternoon}}`` Boolean to invite the members on the 2nd part of the event
+``{{family.invited_evening}}``   Boolean to invite the members on the 3rd part of the event
+``{{family.host}}``              The person that host the family
+``{{family.guests}}``            The guest list
+``{{family.accompanies}}``       The accompany list
 **Members**
----------------------------------------------------------------------------
-``{all}``                      Names of all the members name
-``{count}``                    Number of members
+-----------------------------------------------------------------------------
+``{{all}}``                      Names of all the members name
+``{{count}}``                    Number of members
 **Guests**
----------------------------------------------------------------------------
-``{guests}``                   Names of the guests
-``{guests_count}``             Number of guests
-``{e}``                        "" or "*e*" or "*s*" or "*es*" if there is one male, one female, many male (and/or female) or many female
+-----------------------------------------------------------------------------
+``{{guests}}``                   Names of the guests
+``{{guests_count}}``             Number of guests
+``{{e}}``                        "" or "*e*" or "*s*" or "*es*" if there is one male, one female, many male (and/or female) or many female
 **Accompanies**
----------------------------------------------------------------------------
-``{accompanies}``              Names of the accompanies
-``{accompanies_count}``        Number of accompanies
-``{has_accompanies}``          Boolean wether there is many accompanies or not
-``{has_accompany}``            Boolean wether there is any accompanies or none
-============================== ============================================
+-----------------------------------------------------------------------------
+``{{accompanies}}``              Names of the accompanies
+``{{accompanies_count}}``        Number of accompanies
+``{{has_accompanies}}``          Boolean wether there is many accompanies or not
+``{{has_accompany}}``            Boolean wether there is any accompanies or none
+================================ ============================================
 
 ### template extra filter
 
