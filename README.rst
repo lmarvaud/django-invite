@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/lmarvaud/django-invite.svg?branch=master)](https://travis-ci.org/lmarvaud/django-invite)
+
 =============
 django_invite
 =============
