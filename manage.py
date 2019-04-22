@@ -5,7 +5,7 @@ django admin for django-invite demo project
 import os
 import sys
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no branch
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'demo.settings')
     try:
         from django.core.management import execute_from_command_line

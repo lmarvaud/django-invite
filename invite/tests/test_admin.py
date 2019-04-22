@@ -120,7 +120,7 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
 
     @override_settings(CSRF_HEADER_NAME='CSRF_HEADER_NAME', CSRF_COOKIE_NAME='CSRF_COOKIE_NAME',
                        AUTHENTICATION_BACKENDS=['invite.tests.common.MockSuperUserBackend'])
-    def _send_form(self):
+    def _send_form(self, send_mail=True):
         """
         Mixin function to send email on the formset with cleaned data
         """
@@ -131,7 +131,6 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
             'Event_families-0-family': self.family.pk,
             'Event_families-0-id':
                 event_families_id.filter(event=self.event, family=self.family).first(),
-            'Event_families-0-send_mail': 'on',
             'Event_families-1-event': self.event2.pk,
             'Event_families-1-family': self.family.pk,
             'Event_families-1-id':
@@ -147,6 +146,8 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
             'accompanies-INITIAL_FORMS': '0',
             'accompanies-TOTAL_FORMS': '0',
         }
+        if send_mail:
+            data['Event_families-0-send_mail'] = 'on'
         self.client.force_login(MockSuperUser())
         with patch.object(admin.FamilyAdmin, 'log_change'):
             self.client.post(path, data=data)
@@ -210,6 +211,16 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
         self.assertListEqual(list(recipient),
                              ['Françoise <valid@example.com>', 'Jean <valid@example.com>'])
 
+    @patch.object(admin, 'messages')
+    @patch.object(admin, 'send_mass_html_mail')
+    def test_send_form_without_email(self, send_mass_html_mail__mock: Mock,
+                                     messages_mock: Mock):
+        """Check that no mail is sent if no family is selected by sending the family admin form"""
+        self._send_form(False)
+
+        self.assertEqual(send_mass_html_mail__mock.call_count, 0)
+        self.assertEqual(messages_mock.add_message.call_count, 0)
+
     @override_settings(AUTHENTICATION_BACKENDS=['invite.tests.common.MockSuperUserBackend'])
     def test_add_to_event_1(self):
         """Test add_to_event action template"""
@@ -220,7 +231,9 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
                                            '_selected_action': [str(self.family.pk)], })
 
         self.assertTemplateUsed(response, 'admin/transitional_action.html')
-        self.assertIsInstance(response.context[0].dicts[-1]['form'], invite.forms.AddToEventForm)
+        form = response.context.get('form')
+        self.assertIsInstance(form, invite.forms.AddToEventForm)
+        self.assertFalse(any(form.errors.values()))
 
     @override_settings(AUTHENTICATION_BACKENDS=['invite.tests.common.MockSuperUserBackend'])
     def test_add_to_event_2(self):
@@ -236,6 +249,26 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
 
         self.assertEqual(response.status_code, 302)
         self.assertTrue(family2.invitations.filter(pk=self.event.pk).exists())
+
+    @override_settings(AUTHENTICATION_BACKENDS=['invite.tests.common.MockSuperUserBackend'])
+    def test_add_to_event_3(self):
+        """Test add_to_event with invalid form"""
+        path = reverse('admin:invite_family_changelist')
+        self.client.force_login(MockSuperUser())
+        family2 = self.create_family('2')
+
+        response = self.client.post(path, {'action': 'add_to_event',
+                                           '_confirm': '1',
+                                           '_selected_action': [str(family2.pk)],
+                                           'event': ''})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin/transitional_action.html')
+        form = response.context.get('form')
+        self.assertIsInstance(form, invite.forms.AddToEventForm)
+        self.assertTrue(any(form.errors.values()))
+        self.assertIn('event', form.errors)
+        self.assertEqual(form.errors['event'].data[0].code, 'required')
 
 
 class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint: disable=too-many-ancestors
@@ -272,7 +305,7 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
 
     @override_settings(CSRF_HEADER_NAME='CSRF_HEADER_NAME', CSRF_COOKIE_NAME='CSRF_COOKIE_NAME',
                        AUTHENTICATION_BACKENDS=['invite.tests.common.MockSuperUserBackend'])
-    def _send_form(self):
+    def _send_form(self, send_mail=True):
         """Mixin function to send email on the formset with cleaned data"""
         path = reverse('admin:invite_event_change', kwargs={'object_id': self.event.pk})
         event_families_id = Event.families.through.objects.values_list('pk', flat=True)
@@ -281,7 +314,6 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
             'Event_families-0-family': self.family.pk,
             'Event_families-0-id':
                 event_families_id.filter(event=self.event, family=self.family).first(),
-            'Event_families-0-send_mail': 'on',
             'Event_families-1-event': self.event.pk,
             'Event_families-1-family': self.family2.pk,
             'Event_families-1-id':
@@ -292,19 +324,27 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
             'mailtemplate-INITIAL_FORMS': '0',
             'mailtemplate-TOTAL_FORMS': '0',
         }
+        if send_mail:
+            data['Event_families-0-send_mail'] = 'on'
+
         self.client.force_login(MockSuperUser())
         with patch.object(admin.EventAdmin, 'log_change'):
             self.client.post(path, data=data)
 
+    @patch.object(admin, 'messages')
     @patch.object(admin, 'send_mass_html_mail')
     @override_settings(INVITE_HOSTS={'Marie': 'test_send_mass_html_mail_reply_to@example.com'})
-    def test_send_mass_html_mail_reply_to(self, send_mass_html_mail__mock: Mock):
-        """Check send_mass_html_mail_reply reply_to argument"""
+    def test_send_mass_html_mail_reply_to(self, send_mass_html_mail__mock: Mock,
+                                          messages_mock: Mock):
+        """Check send_mass_html_mail reply_to argument"""
         self._send_form()
 
         self.assertEqual(send_mass_html_mail__mock.call_count, 1)
         self.assertEqual(send_mass_html_mail__mock.call_args[1]['reply_to'],
                          ['Marie <test_send_mass_html_mail_reply_to@example.com>'])
+        self.assertEqual(messages_mock.add_message.call_count, 1)
+        messages_mock.add_message.assert_called_once_with(
+            messages_mock.add_message.call_args[0][0], admin.messages.INFO, '1 messages send')
 
     @patch.object(admin, 'send_mass_html_mail')
     def test_send_mass_html_mail_to_send(self, send_mass_html_mail__mock: Mock):
@@ -357,7 +397,7 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
         self.assertListEqual(list(recipient),
                              ['Françoise <valid@example.com>', 'Jean <valid@example.com>'])
 
-    def test_send_mail_without_mail(self):
+    def test_send_mail_without_template(self):
         """Test what happend when sending an email using a event without mail template"""
         event_without_mail = self.create_event(self.family, name=None)
         fadm = admin.EventAdmin(Event, self.site)
@@ -366,6 +406,16 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
             message_user_mock.assert_called_once_with(
                 'Request', 'The event of the 2018-12-31 has no email template set',
                 admin.messages.ERROR)
+
+    @patch.object(admin, 'messages')
+    @patch.object(admin, 'send_mass_html_mail')
+    def test_send_form_without_email(self, send_mass_html_mail__mock: Mock,
+                                     messages_mock: Mock):
+        """Check that no mail is sent if no family is selected by sending the event admin form"""
+        self._send_form(False)
+
+        self.assertEqual(send_mass_html_mail__mock.call_count, 0)
+        self.assertEqual(messages_mock.add_message.call_count, 0)
 
 
 class TestFamilyInvitationInline(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint: disable=too-many-ancestors

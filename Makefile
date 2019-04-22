@@ -15,7 +15,7 @@ all: venv install database adminuser importguests runserver
 .PHONY: coverage-test
 coverage-test:
 	$(info run tests)
-	${VIRTUAL_ENV}/bin/coverage run ./manage.py test -v3
+	${VIRTUAL_ENV}/bin/coverage run --branch ./manage.py test -v3
 
 .PHONY: coverage-report
 coverage-report:

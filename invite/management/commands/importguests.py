@@ -48,7 +48,7 @@ def _create_guests(line):
     gender = list(strip(line[GENDER_KEY].split(',')))
     names = list(strip(multi_split(line[SURNAME_KEY], ',', ' et ', '&')))
     for i, name in enumerate(names):
-        if i > len(gender):
+        if i >= len(gender):
             logging.warning('missing gender to %s : SKIPPED', name)
         else:
             yield Guest(name=name,
