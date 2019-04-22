@@ -34,6 +34,7 @@ class Family(models.Model):
                                             default=False)
     invited_evening = models.BooleanField(verbose_name=_('is invite at the party'), default=True)
     host = models.CharField(verbose_name=_('principal host'), max_length=32)
+    owners = models.ManyToManyField(settings.AUTH_USER_MODEL, editable=False, blank=False)
 
     @cached_property
     def context(self):

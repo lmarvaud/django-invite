@@ -10,11 +10,16 @@ import itertools
 import logging
 import operator
 from argparse import RawDescriptionHelpFormatter
+try:
+    from typing import Optional, Dict
+except ImportError:
+    pass
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.management import BaseCommand, CommandParser
 from django.utils.dateparse import parse_date
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, ungettext_lazy
 
 from ...join_and import join_and
 from ...models import Family, Guest, Accompany, Event
@@ -118,7 +123,11 @@ csv format is like::
 
     def handle(self, *args, **options):
         """Process to the parsing of the csv"""
+        owner = get_user_model().objects.filter(is_superuser=True).first()
+        if not owner:
+            return 'You have to create a superuser first'
         event = self.create_event(**options)
+        count = 0
         with open(options['csv'], 'r') as csv_file:
             csv_reader = csv.DictReader(csv_file, [
                 EMAIL_KEY, PHONE_KEY, HOST_KEY, GENDER_KEY, SURNAME_KEY, ACCOMPANY_KEY
@@ -133,22 +142,34 @@ csv format is like::
                         midday = False
                     else:
                         afternoon = False
-                if line[EMAIL_KEY]:
-                    if line[HOST_KEY] and line[HOST_KEY] not in settings.INVITE_HOSTS:
-                        logging.warning('%s source not referenced in the setting INVITE_HOSTS',
-                                        line[HOST_KEY])
-                    host = line[HOST_KEY] if line[HOST_KEY] in settings.INVITE_HOSTS else \
-                        join_and(list(settings.INVITE_HOSTS.keys()))
-                    guests = _create_guests(line)
-                    accompagies = _create_accompagnies(line)
-                    family = Family.objects.create(invited_midday=midday,
-                                                   invited_afternoon=afternoon,
-                                                   invited_evening=evening,
-                                                   host=host)
-                    family.guests.add(*guests, bulk=False)
-                    family.accompanies.add(*accompagies, bulk=False)
-                    if event:
-                        family.invitations.add(event)
+                family = self._create_family(event, line, owner=owner, invited_midday=midday,
+                                             invited_afternoon=afternoon, invited_evening=evening)
+                if family:
+                    count += 1
+        return ungettext_lazy('%d family created', '%d families create') % count
+
+    @staticmethod
+    def _create_family(event, line, owner, **kwargs):
+        # type: (Optional[Event], Dict[str, str]) -> Optional[Family]
+        """
+        Parse csv line to create a family object
+        """
+        if line[EMAIL_KEY]:
+            if line[HOST_KEY] and line[HOST_KEY] not in settings.INVITE_HOSTS:
+                logging.warning('%s source not referenced in the setting INVITE_HOSTS',
+                                line[HOST_KEY])
+            host = line[HOST_KEY] if line[HOST_KEY] in settings.INVITE_HOSTS else \
+                join_and(list(settings.INVITE_HOSTS.keys()))
+            guests = _create_guests(line)
+            accompagies = _create_accompagnies(line)
+            family = Family.objects.create(host=host, **kwargs)
+            family.owners.add(owner)
+            family.guests.add(*guests, bulk=False)
+            family.accompanies.add(*accompagies, bulk=False)
+            if event:
+                family.invitations.add(event)
+            return family
+        return None
 
     @staticmethod
     def create_event(event_date, event_name, **unused_options):

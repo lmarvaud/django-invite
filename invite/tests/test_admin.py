@@ -8,7 +8,9 @@ from collections import Iterable
 from unittest.mock import patch, Mock
 
 from django.contrib.admin import AdminSite
+from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.http import HttpResponse
 from django.shortcuts import reverse
 from django.test import TestCase, override_settings
 
@@ -17,7 +19,7 @@ from invite import admin
 from invite.admin import JoinedDocumentAdmin
 from invite.forms import JoinedDocumentForm
 from invite.models import Family, Guest, Event, JoinedDocument
-from invite.tests.common import TestEventMixin, TestMailTemplateMixin, MockSuperUser, MockRequest
+from invite.tests.common import TestEventMixin, TestMailTemplateMixin, MockRequest
 
 
 class TestMail(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint: disable=too-many-ancestors
@@ -116,11 +118,29 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
     def test_get_list_display(self):
         """Test get_list_display method"""
         fadm = admin.FamilyAdmin(Family, self.site)
-        self.assertListEqual(list(fadm.get_list_display(MockRequest.instance())), ['__str__'])
+        user_list_display = list(fadm.get_list_display(MockRequest.instance(self.user)))
+        self.assertListEqual(user_list_display, ['__str__'])
 
-    @override_settings(CSRF_HEADER_NAME='CSRF_HEADER_NAME', CSRF_COOKIE_NAME='CSRF_COOKIE_NAME',
-                       AUTHENTICATION_BACKENDS=['invite.tests.common.MockSuperUserBackend'])
-    def _send_form(self, send_mail=True):
+        superuser_list_display = list(fadm.get_list_display(MockRequest.instance()))
+        self.assertListEqual(superuser_list_display, ['__str__'])
+
+    def test_get_queryset(self):
+        """Test get_list_display method"""
+        superuser = get_user_model().objects.create_superuser(
+            username='super_user', email='valid@example.com', password='mf(33<QuPzg\'(0')
+        family2 = self.create_family('2', owner=superuser)
+
+        fadm = admin.FamilyAdmin(Family, self.site)
+        family_qs = fadm.get_queryset(MockRequest.instance(self.user))
+        self.assertEqual(family_qs.count(), 1)
+        self.assertEqual(family_qs.get(), self.family)
+
+        family_qs = fadm.get_queryset(MockRequest.instance(superuser))
+        self.assertEqual(family_qs.count(), 1)
+        self.assertEqual(family_qs.get(), family2)
+
+    @override_settings(CSRF_HEADER_NAME='CSRF_HEADER_NAME', CSRF_COOKIE_NAME='CSRF_COOKIE_NAME')
+    def _send_form(self, send_mail=True):  # type: (bool) -> HttpResponse
         """
         Mixin function to send email on the formset with cleaned data
         """
@@ -148,7 +168,7 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
         }
         if send_mail:
             data['Event_families-0-send_mail'] = 'on'
-        self.client.force_login(MockSuperUser())
+        self.client.force_login(self.user)
         with patch.object(admin.FamilyAdmin, 'log_change'):
             self.client.post(path, data=data)
 
@@ -221,11 +241,32 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
         self.assertEqual(send_mass_html_mail__mock.call_count, 0)
         self.assertEqual(messages_mock.add_message.call_count, 0)
 
-    @override_settings(AUTHENTICATION_BACKENDS=['invite.tests.common.MockSuperUserBackend'])
+    def test_create_1(self):
+        """Validate the admin family creation"""
+        path = reverse('admin:invite_family_add')
+        self.client.force_login(self.user)
+
+        self.client.post(path, {
+            'host': 'Pierre',
+
+            'Event_families-INITIAL_FORMS': '0',
+            'Event_families-TOTAL_FORMS': '0',
+            'guests-INITIAL_FORMS': '0',
+            'guests-TOTAL_FORMS': '0',
+            'accompanies-INITIAL_FORMS': '0',
+            'accompanies-TOTAL_FORMS': '0',
+
+        })
+
+        family = Family.objects.last()
+        self.assertNotEqual(family, self.family)
+        self.assertEqual(family.host, 'Pierre')
+        self.assertIn(self.user, family.owners.all())
+
     def test_add_to_event_1(self):
         """Test add_to_event action template"""
         path = reverse('admin:invite_family_changelist')
-        self.client.force_login(MockSuperUser())
+        self.client.force_login(self.user)
 
         response = self.client.post(path, {'action': 'add_to_event',
                                            '_selected_action': [str(self.family.pk)], })
@@ -235,12 +276,11 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
         self.assertIsInstance(form, invite.forms.AddToEventForm)
         self.assertFalse(any(form.errors.values()))
 
-    @override_settings(AUTHENTICATION_BACKENDS=['invite.tests.common.MockSuperUserBackend'])
     def test_add_to_event_2(self):
         """Test add_to_event action success"""
         path = reverse('admin:invite_family_changelist')
-        self.client.force_login(MockSuperUser())
-        family2 = self.create_family('2')
+        self.client.force_login(self.user)
+        family2 = self.create_family('2', owner=self.user)
 
         response = self.client.post(path, {'action': 'add_to_event',
                                            '_confirm': '1',
@@ -250,12 +290,11 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
         self.assertEqual(response.status_code, 302)
         self.assertTrue(family2.invitations.filter(pk=self.event.pk).exists())
 
-    @override_settings(AUTHENTICATION_BACKENDS=['invite.tests.common.MockSuperUserBackend'])
     def test_add_to_event_3(self):
         """Test add_to_event with invalid form"""
         path = reverse('admin:invite_family_changelist')
-        self.client.force_login(MockSuperUser())
-        family2 = self.create_family('2')
+        self.client.force_login(self.user)
+        family2 = self.create_family('2', owner=self.user)
 
         response = self.client.post(path, {'action': 'add_to_event',
                                            '_confirm': '1',
@@ -270,6 +309,21 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
         self.assertIn('event', form.errors)
         self.assertEqual(form.errors['event'].data[0].code, 'required')
 
+    def test_add_to_event_4(self):
+        """Test add_to_event with not owned family"""
+        path = reverse('admin:invite_family_changelist')
+        self.client.force_login(self.user)
+        user2 = get_user_model().objects.create_user('user2', 'valid@example.com', '1pewofk9q[3r-i')
+        family2 = self.create_family('2', owner=user2)
+
+        self.client.post(path, {'action': 'add_to_event',
+                                '_confirm': '1',
+                                '_selected_action': [str(family2.pk)],
+                                'event': str(self.event.pk)})
+
+        self.assertFalse(family2.invitations.filter(pk=self.event.pk).exists())
+        self.assertFalse(self.event.families.filter(pk=family2.pk).exists())
+
 
 class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint: disable=too-many-ancestors
     """Test Event Admin"""
@@ -277,7 +331,7 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
     def setUp(self):
         super(TestEventAdmin, self).setUp()
         self.site = AdminSite()
-        self.family2 = self.create_family(name_suffix='2')
+        self.family2 = self.create_family(name_suffix='2', owner=self.user)
         self.event.families.add(self.family2)
 
     def test_get_fields(self):
@@ -303,8 +357,7 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
             admin.FamilyInvitationInline,
         ])
 
-    @override_settings(CSRF_HEADER_NAME='CSRF_HEADER_NAME', CSRF_COOKIE_NAME='CSRF_COOKIE_NAME',
-                       AUTHENTICATION_BACKENDS=['invite.tests.common.MockSuperUserBackend'])
+    @override_settings(CSRF_HEADER_NAME='CSRF_HEADER_NAME', CSRF_COOKIE_NAME='CSRF_COOKIE_NAME')
     def _send_form(self, send_mail=True):
         """Mixin function to send email on the formset with cleaned data"""
         path = reverse('admin:invite_event_change', kwargs={'object_id': self.event.pk})
@@ -327,7 +380,7 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
         if send_mail:
             data['Event_families-0-send_mail'] = 'on'
 
-        self.client.force_login(MockSuperUser())
+        self.client.force_login(self.user)
         with patch.object(admin.EventAdmin, 'log_change'):
             self.client.post(path, data=data)
 

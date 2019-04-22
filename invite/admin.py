@@ -1,6 +1,7 @@
 """
 Admin configurations for django-invite project
 """
+
 from django.conf import settings
 from django.contrib import admin, messages
 from django.urls import reverse
@@ -109,6 +110,19 @@ class FamilyAdmin(FamilyInvitationModelAdminMixin):
     inlines = [InviteInline, AccompanyInline] + FamilyInvitationModelAdminMixin.inlines
     search_fields = ('guests__name', 'accompanies__name')
     actions = ['add_to_event']
+
+    def get_queryset(self, request):
+        queryset = super(FamilyAdmin, self).get_queryset(request)
+        queryset = queryset.filter(owners=request.user)
+        return queryset
+
+    def get_list_display(self, request):
+        list_display = super(FamilyAdmin, self).get_list_display(request)
+        return list_display
+
+    def save_model(self, request, obj, form, change):
+        super(FamilyAdmin, self).save_model(request, obj, form, change)
+        obj.owners.add(request.user)
 
     @transitional_form(form_class=AddToEventForm)
     def add_to_event(self, request, families, form):  # pylint: disable=no-self-use

@@ -3,9 +3,9 @@ Test django-invite models
 
 Created by lmarvaud on 01/01/2019
 """
-from unittest import TestCase
-
 from datetime import date
+
+from django.test import TestCase
 
 from invite.models import Guest, Accompany, Event, JoinedDocument
 from invite.tests.common import TestFamilyMixin, TestEventMixin
