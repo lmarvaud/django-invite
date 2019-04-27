@@ -216,6 +216,7 @@ class JoinedDocument(models.Model):
     document = models.FileField(upload_to='joins')
     name = models.CharField(max_length=30, blank=True)
     mimetype = models.CharField(max_length=30, null=False)
+    owners = models.ManyToManyField(settings.AUTH_USER_MODEL, editable=False, blank=False)
 
     def __str__(self):
         return 'cid:%s' % self.name

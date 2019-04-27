@@ -188,3 +188,12 @@ class JoinedDocumentAdmin(admin.ModelAdmin):
     """Joined document admin view"""
     readonly_fields = ['mimetype']
     form = JoinedDocumentForm
+
+    def save_model(self, request, obj, form, change):
+        super(JoinedDocumentAdmin, self).save_model(request, obj, form, change)
+        obj.owners.add(request.user)
+
+    def get_queryset(self, request):
+        queryset = super(JoinedDocumentAdmin, self).get_queryset(request)
+        queryset = queryset.filter(owners=request.user)
+        return queryset

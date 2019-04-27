@@ -5,7 +5,10 @@ Created by lmarvaud on 01/01/2019
 """
 from datetime import date
 from os import path
-from typing import Iterator, Type, Dict
+try:
+    from typing import Iterator, Type, Dict, Optional
+except ImportError:
+    pass
 from unittest.mock import Mock
 
 from django.apps import apps
@@ -115,8 +118,9 @@ class TestMailTemplateMixin:  # pylint: disable=too-few-public-methods
         self.joined_document = JoinedDocument.objects.create(
             document=SimpleUploadedFile('fake-file.txt', b'attachment\n'),
             name='happy.png',
-            mimetype='image/png'
+            mimetype='image/png',
         )
+        self.joined_document.owners.add(self.user)
         mail_template.joined_documents.add(self.joined_document)
 
     def tearDown(self):  # pylint: disable=invalid-name
@@ -186,18 +190,19 @@ class MockSuperUser:  # pylint: disable=too-few-public-methods
 
 class MockRequest:  # pylint: disable=too-few-public-methods
     """Fake request"""
-    _instance = None
-    method = 'GET'
     _default_user = MockSuperUser()  # type: User
+    _instance = None  # type: MockRequest
+    method = 'GET'
 
-    def __init__(self):
+    def __init__(self, user=None):  # type: (MockRequest, Optional[User]) -> None
         """Initialize the user"""
-        self.user = self._default_user
+        self.user = user or self._default_user
 
     @classmethod
     def instance(cls, user=None):
         """Gest singleton instance"""
         if not cls._instance:
-            cls._instance = cls()
-        cls._instance.user = user or cls._default_user
+            cls._instance = cls(user)
+        else:
+            cls._instance.user = user or cls._default_user
         return cls._instance

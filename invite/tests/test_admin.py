@@ -5,11 +5,16 @@ Created by lmarvaud on 03/11/2018
 """
 import os
 from collections import Iterable
+from datetime import date
+try:
+    from typing import Optional
+except ImportError:
+    pass
 from unittest.mock import patch, Mock
 
-from datetime import date
 from django.contrib.admin import AdminSite
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import HttpResponse
 from django.shortcuts import reverse
@@ -616,11 +621,13 @@ class TestJoinedDocumentAdmin(TestCase):
 
     def test_edit_without_name(self):
         """test an edition with an incomplete form"""
+        user = get_user_model().objects.create_user('user3', 'valid@example.com', '1pewofk9q[3r-i')
         joined_document = JoinedDocument.objects.create(
             document=SimpleUploadedFile('fake-file.txt', b'attachment\n'),
             name='att.txt',
-            mimetype='text/plain'
+            mimetype='text/plain',
         )
+        joined_document.owners.add(user)
         model_form = JoinedDocumentAdmin(JoinedDocument, Mock()).get_form(MockRequest())
         form = model_form(
             {'name': ''},
@@ -630,3 +637,60 @@ class TestJoinedDocumentAdmin(TestCase):
 
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.instance.name, 'fake-file.txt')
+
+    @override_settings(CSRF_HEADER_NAME='CSRF_HEADER_NAME', CSRF_COOKIE_NAME='CSRF_COOKIE_NAME')
+    def _send_form(self, user, document=None, name=None):
+        # type: (AbstractUser, Optional[JoinedDocument], Optional[str]) -> HttpResponse
+        """
+        Mixin function to send admin request to JoinDocumentAdmin add or change view
+
+        :param document: Document to edit (None to send create)
+        :param name: Name to set (None to not set)
+        :param user: User to login
+        :return: the request response
+        """
+        if not document:
+            path = reverse('admin:invite_joineddocument_add')
+        else:
+            path = reverse('admin:invite_joineddocument_change', kwargs={'object_id': document.pk})
+        file = SimpleUploadedFile('fake-file.txt', b'attachment\n', 'text/javascript')
+        data = {
+            'document': file
+        }
+        if name:
+            data['name'] = name
+        if user:
+            self.client.force_login(user)
+        with patch.object(admin.FamilyAdmin, 'log_change'):
+            return self.client.post(path, data=data)
+
+    def test_create(self):
+        """Validate the admin joined document creation"""
+        user = get_user_model().objects.create_superuser('user4', 'valid@example.com',
+                                                         '1pewofk9q[3r-i')
+
+        self._send_form(user=user)
+
+        joined_document = JoinedDocument.objects.last()  # type: JoinedDocument
+        self.assertEqual(joined_document.name, 'fake-file.txt')
+        self.assertEqual(joined_document.mimetype, 'text/plain')
+
+    def test_edit_not_mine(self):
+        """Validate the admin joined document edition"""
+        document = SimpleUploadedFile('fake-test_without_document.txt', b'attachment\n',
+                                      'text/javascript')
+        user = get_user_model().objects.create_superuser('user5', 'valid@example.com',
+                                                         '1pewofk9q[3r-i')
+        joined_document = JoinedDocument.objects.create(document=document)
+        joined_document.owners.add(user)
+        expected_messages = [
+            'joined document with ID "%d" doesn\'t exist. Perhaps it was deleted?'
+            % joined_document.pk,
+        ]
+        user2 = get_user_model().objects.create_superuser('user6', 'valid@example.com',
+                                                          '1pewofk9q[3r-i')
+
+        response = self._send_form(document=joined_document, user=user2)
+
+        messages = list(map(str, admin.messages.get_messages(response.wsgi_request)))
+        self.assertEqual(messages, expected_messages)
