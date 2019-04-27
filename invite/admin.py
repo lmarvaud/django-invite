@@ -116,10 +116,6 @@ class FamilyAdmin(FamilyInvitationModelAdminMixin):
         queryset = queryset.filter(owners=request.user)
         return queryset
 
-    def get_list_display(self, request):
-        list_display = super(FamilyAdmin, self).get_list_display(request)
-        return list_display
-
     def save_model(self, request, obj, form, change):
         super(FamilyAdmin, self).save_model(request, obj, form, change)
         obj.owners.add(request.user)
@@ -148,6 +144,15 @@ class EventAdmin(FamilyInvitationModelAdminMixin):
     actions = ['send_mail']
     search_fields = ('name', 'date')
     inlines = [MailTemplateInline] + FamilyInvitationModelAdminMixin.inlines
+
+    def get_queryset(self, request):
+        queryset = super(EventAdmin, self).get_queryset(request)
+        queryset = queryset.filter(owners=request.user)
+        return queryset
+
+    def save_model(self, request, obj, form, change):
+        super(EventAdmin, self).save_model(request, obj, form, change)
+        obj.owners.add(request.user)
 
     def send_mail(self, request, events):
         """

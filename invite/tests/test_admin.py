@@ -7,6 +7,7 @@ import os
 from collections import Iterable
 from unittest.mock import patch, Mock
 
+from datetime import date
 from django.contrib.admin import AdminSite
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -98,7 +99,7 @@ class TestFamilyAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
 
     def setUp(self):
         super(TestFamilyAdmin, self).setUp()
-        self.event2 = self.create_event(self.family, name='test2')
+        self.event2 = self.create_event(self.family, name='test2', owner=self.user)
         self.site = AdminSite()
 
     def tearDown(self):
@@ -348,6 +349,21 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
         fadm = admin.EventAdmin(Event, self.site)
         self.assertListEqual(list(fadm.get_list_display(MockRequest.instance())), ['__str__'])
 
+    def test_get_queryset(self):
+        """Test get_list_display method"""
+        superuser = get_user_model().objects.create_superuser(
+            username='super_user', email='valid@example.com', password='mf(33<QuPzg\'(0')
+        event2 = self.create_event(owner=superuser, name='2')
+
+        eadm = admin.EventAdmin(Event, self.site)
+        event_qs = eadm.get_queryset(MockRequest.instance(self.user))
+        self.assertEqual(event_qs.count(), 1)
+        self.assertEqual(event_qs.get(), self.event)
+
+        event_qs = eadm.get_queryset(MockRequest.instance(superuser))
+        self.assertEqual(event_qs.count(), 1)
+        self.assertEqual(event_qs.get(), event2)
+
     def test_inlines(self):
         """Test inlines"""
         fadm = admin.EventAdmin(Event, self.site)
@@ -357,9 +373,38 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
             admin.FamilyInvitationInline,
         ])
 
+    def test_create_1(self):
+        """Validate the admin event creation"""
+        path = reverse('admin:invite_event_add')
+        self.client.force_login(self.user)
+
+        self.client.post(path, {
+            'name': 'Event name',
+            'date': '2018-01-01',
+
+            'Event_families-INITIAL_FORMS': '0',
+            'Event_families-TOTAL_FORMS': '0',
+
+            'mailtemplate-INITIAL_FORMS': '0',
+            'mailtemplate-TOTAL_FORMS': '0',
+
+        })
+
+        event = Event.objects.last()  # type: Event
+        self.assertNotEqual(event, self.family)
+        self.assertEqual(event.name, 'Event name')
+        self.assertEqual(event.date, date(2018, 1, 1))
+        self.assertIn(self.user, event.owners.all())
+
     @override_settings(CSRF_HEADER_NAME='CSRF_HEADER_NAME', CSRF_COOKIE_NAME='CSRF_COOKIE_NAME')
-    def _send_form(self, send_mail=True):
-        """Mixin function to send email on the formset with cleaned data"""
+    def _send_form(self, send_mail=True, login_user=None):
+        """
+        Mixin function to send email on the formset with cleaned data
+
+        :param send_mail: whether or not the email as to be send for the 1st family
+        :param login_user: user to log in (default: self.user)
+        :return: The response
+        """
         path = reverse('admin:invite_event_change', kwargs={'object_id': self.event.pk})
         event_families_id = Event.families.through.objects.values_list('pk', flat=True)
         data = {
@@ -380,9 +425,22 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
         if send_mail:
             data['Event_families-0-send_mail'] = 'on'
 
-        self.client.force_login(self.user)
+        self.client.force_login(login_user or self.user)
         with patch.object(admin.EventAdmin, 'log_change'):
-            self.client.post(path, data=data)
+            return self.client.post(path, data=data)
+
+    def test_edit_not_mine(self):
+        """Validate the admin event creation"""
+        expected_messages = [
+            'event with ID "%d" doesn\'t exist. Perhaps it was deleted?' % self.event.pk,
+        ]
+        user = get_user_model().objects.create_superuser('user4', 'valid@example.com',
+                                                         '1pewofk9q[3r-i')
+
+        response = self._send_form(False, user)
+
+        messages = list(map(str, admin.messages.get_messages(response.wsgi_request)))
+        self.assertEqual(messages, expected_messages)
 
     @patch.object(admin, 'messages')
     @patch.object(admin, 'send_mass_html_mail')
@@ -452,7 +510,7 @@ class TestEventAdmin(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylint
 
     def test_send_mail_without_template(self):
         """Test what happend when sending an email using a event without mail template"""
-        event_without_mail = self.create_event(self.family, name=None)
+        event_without_mail = self.create_event(self.family, name=None, owner=self.user)
         fadm = admin.EventAdmin(Event, self.site)
         with patch.object(fadm, 'message_user') as message_user_mock:
             fadm.send_mail('Request', [self.event, event_without_mail])

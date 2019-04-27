@@ -126,7 +126,7 @@ csv format is like::
         owner = get_user_model().objects.filter(is_superuser=True).first()
         if not owner:
             return 'You have to create a superuser first'
-        event = self.create_event(**options)
+        event = self.create_event(owner=owner, **options)
         count = 0
         with open(options['csv'], 'r') as csv_file:
             csv_reader = csv.DictReader(csv_file, [
@@ -172,7 +172,7 @@ csv format is like::
         return None
 
     @staticmethod
-    def create_event(event_date, event_name, **unused_options):
+    def create_event(event_date, event_name, owner, **unused_options):
         """
         Potentially create an invitation with the name and date from the option if one of those is
         specified
@@ -187,5 +187,6 @@ csv format is like::
                 params['date'] = event_date
             if event_name:
                 params['name'] = event_name
-            invitation = Event.objects.create(**params)
+            invitation = Event.objects.create(**params)  # type: Event
+            invitation.owners.add(owner)
         return invitation

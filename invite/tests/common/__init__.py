@@ -100,7 +100,6 @@ class TestMailTemplateMixin:  # pylint: disable=too-few-public-methods
                      "Juin** à Paris pour une soirée d'enfer !\n\n"
                      '**Save the date !**\n\n\n'
                      'FJ\n')
-    event = None  # type: Event
 
     def setUp(self):  # pylint: disable=invalid-name
         """
@@ -135,9 +134,10 @@ class TestEventMixin(TestFamilyMixin):
     event = None  # type: Event
 
     @staticmethod
-    def create_event(*family, name='test'):
+    def create_event(*family, owner, name='test'):
         """Create an event with family"""
         event = Event.objects.create(name=name, date=date(2018, 12, 31))
+        event.owners.add(owner)
         event.families.add(*family)
         return event
 
@@ -146,7 +146,7 @@ class TestEventMixin(TestFamilyMixin):
         Create the event and call TestFamilyMixin to create the family
         """
         super(TestEventMixin, self).setUp()
-        self.event = self.create_event(self.family)
+        self.event = self.create_event(self.family, owner=self.user)
 
     def tearDown(self):
         """

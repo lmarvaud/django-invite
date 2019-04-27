@@ -137,6 +137,7 @@ class Event(models.Model):
     name = models.CharField(verbose_name=_('name'), max_length=64, blank=True, null=True)
     date = models.DateField(verbose_name=_('date'), blank=True, null=True)
     families = models.ManyToManyField('Family', 'invitations', blank=True)
+    owners = models.ManyToManyField(settings.AUTH_USER_MODEL, editable=False, blank=False)
 
     def context(self, family):
         """
