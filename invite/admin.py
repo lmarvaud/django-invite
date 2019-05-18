@@ -109,6 +109,7 @@ class FamilyAdmin(FamilyInvitationModelAdminMixin):
     inlines = [InviteInline, AccompanyInline] + FamilyInvitationModelAdminMixin.inlines
     search_fields = ('guests__name', 'accompanies__name')
     actions = ['add_to_event']
+    list_filter = ['invitations']
 
     @transitional_form(form_class=AddToEventForm)
     def add_to_event(self, request, families, form):  # pylint: disable=no-self-use
