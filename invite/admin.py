@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, ngettext
 
 from invite.forms import JoinedDocumentForm, FamilyInvitationForm, AddToEventForm
 from invite.join_and import join_and
@@ -95,8 +95,11 @@ class FamilyInvitationModelAdminMixin(admin.ModelAdmin):
                 reply_to=['{host} <{email}>'.format(host=host, email=settings.INVITE_HOSTS[host])
                           for host in settings.INVITE_HOSTS]
             )
-            messages.add_message(request, messages.INFO,
-                                 _('%(result)d messages send') % {'result': send_result})
+            messages.add_message(
+                request, messages.INFO,
+                ngettext('one message send', '%(result)d messages send', send_result) % {
+                    'result': send_result
+                })
 
 
 @admin.register(Family, site=admin.site)
@@ -161,7 +164,10 @@ class EventAdmin(FamilyInvitationModelAdminMixin):
             reply_to=['{host} <{email}>'.format(host=host, email=settings.INVITE_HOSTS[host])
                       for host in settings.INVITE_HOSTS]
         )
-        self.message_user(request, _('%(result)d messages send') % {'result': result})
+        self.message_user(
+            request,
+            ngettext('one message send', '%(result)d messages send', result) % {'result': result}
+        )
     send_mail.short_description = _('Send the email')
 
 
