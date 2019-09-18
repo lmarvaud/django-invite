@@ -1,6 +1,7 @@
 """
 Admin configurations for django-invite project
 """
+
 from django.conf import settings
 from django.contrib import admin, messages
 from django.urls import reverse
@@ -111,6 +112,15 @@ class FamilyAdmin(FamilyInvitationModelAdminMixin):
     actions = ['add_to_event']
     list_filter = ['invitations']
 
+    def get_queryset(self, request):
+        queryset = super(FamilyAdmin, self).get_queryset(request)
+        queryset = queryset.filter(owners=request.user)
+        return queryset
+
+    def save_model(self, request, obj, form, change):
+        super(FamilyAdmin, self).save_model(request, obj, form, change)
+        obj.owners.add(request.user)
+
     @transitional_form(form_class=AddToEventForm)
     def add_to_event(self, request, families, form):  # pylint: disable=no-self-use
         """
@@ -135,6 +145,15 @@ class EventAdmin(FamilyInvitationModelAdminMixin):
     actions = ['send_mail']
     search_fields = ('name', 'date')
     inlines = [MailTemplateInline] + FamilyInvitationModelAdminMixin.inlines
+
+    def get_queryset(self, request):
+        queryset = super(EventAdmin, self).get_queryset(request)
+        queryset = queryset.filter(owners=request.user)
+        return queryset
+
+    def save_model(self, request, obj, form, change):
+        super(EventAdmin, self).save_model(request, obj, form, change)
+        obj.owners.add(request.user)
 
     def send_mail(self, request, events):
         """
@@ -170,3 +189,12 @@ class JoinedDocumentAdmin(admin.ModelAdmin):
     """Joined document admin view"""
     readonly_fields = ['mimetype']
     form = JoinedDocumentForm
+
+    def save_model(self, request, obj, form, change):
+        super(JoinedDocumentAdmin, self).save_model(request, obj, form, change)
+        obj.owners.add(request.user)
+
+    def get_queryset(self, request):
+        queryset = super(JoinedDocumentAdmin, self).get_queryset(request)
+        queryset = queryset.filter(owners=request.user)
+        return queryset

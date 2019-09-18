@@ -4,7 +4,12 @@ EXTRA_PIP_INSTALL	?= -r requirements-dev.txt
 PYTHON_SOURCE		= $(shell find invite/ demo/ -name '*.py')
 PYTHON			?= ${VIRTUAL_ENV}/bin/python
 PYTHON_VERSION		?= python3.5
+TEST_DIRS		?=
 VIRTUAL_ENV		?= ./venv
+
+space :=
+space +=
+comma := ,
 
 ifneq (,$(wildcard ./.env))
 include .env
@@ -15,12 +20,13 @@ all: venv install database adminuser importguests runserver
 .PHONY: coverage-test
 coverage-test:
 	$(info run tests)
-	${VIRTUAL_ENV}/bin/coverage run --branch ./manage.py test -v3
+	${VIRTUAL_ENV}/bin/coverage run --branch ./manage.py test -v3 ${TEST_DIRS}
 
 .PHONY: coverage-report
 coverage-report:
 	$(info report on coverage)
-	${VIRTUAL_ENV}/bin/coverage report --show-missing
+	${VIRTUAL_ENV}/bin/coverage report --show-missing \
+	    --include="$(subst $(space),$(comma),$(TEST_DIRS:%=./%/**))"
 
 .PHONY: importguests
 importguests:

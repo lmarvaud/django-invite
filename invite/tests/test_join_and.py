@@ -3,7 +3,7 @@ test invite.join_and
 
 Created by lmarvaud on 01/01/2019
 """
-from unittest import TestCase
+from django.test import TestCase
 
 from invite.join_and import join_and
 

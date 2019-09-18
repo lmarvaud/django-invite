@@ -5,9 +5,18 @@ Created by lmarvaud on 01/01/2019
 """
 from datetime import date
 from os import path
+try:
+    from typing import Iterator, Type, Dict, Optional
+except ImportError:
+    pass
 from unittest.mock import Mock
 
+from django.apps import apps
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User, Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db.models import Model
 
 from invite.models import Family, Guest, Accompany, Event, MailTemplate, JoinedDocument
 
@@ -17,20 +26,18 @@ class TestFamilyMixin:
     Test case mixin creating a family
     """
     family = None
+    user = None
 
     @staticmethod
-    def create_family(name_suffix: str = ''):
+    def create_family(name_suffix='', owner=None):  # type: (str, User) -> Family
         """
         Create a family with 2 guests and 2 accompanies
 
         Guests are named "Françoise{{name_suffix}}" and "Jean{{name_suffix}}"
         Accompanies : "Michel{{name_suffix}}" and "Michelle{{name_suffix}}
-
-        :param name_suffix:
-        :param host:
-        :return:
         """
         family = Family.objects.create(host='Marie')
+        family.owners.add(owner)
         family.guests.add(
             Guest(name='Françoise%s' % name_suffix, email='valid@example.com', phone='0123456789',
                   female=True),
@@ -50,13 +57,22 @@ class TestFamilyMixin:
         Create the family
         """
         super(TestFamilyMixin, self).setUp()
-        self.family = self.create_family()
+        self.user = get_user_model().objects.create_user(
+            email='valid@example.com', username='test_user', password='qpGsfN@cP0L})cW#kq',
+            is_staff=True
+        )
+        invite_models = apps.get_app_config('invite').get_models()  # type: Iterator[Type[Model]]
+        content_types = ContentType.objects.get_for_models(*invite_models).values() \
+            # type: Dict[Model, ContentType]
+        self.user.user_permissions.add(*Permission.objects.filter(content_type__in=content_types))
+        self.family = self.create_family(owner=self.user)
 
     def tearDown(self):  # pylint: disable=invalid-name
         """
         Delete the family
         """
         self.family.delete()
+        self.user.delete()
         super(TestFamilyMixin, self).tearDown()
 
 
@@ -87,7 +103,6 @@ class TestMailTemplateMixin:  # pylint: disable=too-few-public-methods
                      "Juin** à Paris pour une soirée d'enfer !\n\n"
                      '**Save the date !**\n\n\n'
                      'FJ\n')
-    event = None
 
     def setUp(self):  # pylint: disable=invalid-name
         """
@@ -103,8 +118,9 @@ class TestMailTemplateMixin:  # pylint: disable=too-few-public-methods
         self.joined_document = JoinedDocument.objects.create(
             document=SimpleUploadedFile('fake-file.txt', b'attachment\n'),
             name='happy.png',
-            mimetype='image/png'
+            mimetype='image/png',
         )
+        self.joined_document.owners.add(self.user)
         mail_template.joined_documents.add(self.joined_document)
 
     def tearDown(self):  # pylint: disable=invalid-name
@@ -119,12 +135,13 @@ class TestEventMixin(TestFamilyMixin):
     """
     Test case mixin creating an event with a family
     """
-    event = None
+    event = None  # type: Event
 
     @staticmethod
-    def create_event(*family, name='test'):
+    def create_event(*family, owner, name='test'):
         """Create an event with family"""
         event = Event.objects.create(name=name, date=date(2018, 12, 31))
+        event.owners.add(owner)
         event.families.add(*family)
         return event
 
@@ -133,7 +150,7 @@ class TestEventMixin(TestFamilyMixin):
         Create the event and call TestFamilyMixin to create the family
         """
         super(TestEventMixin, self).setUp()
-        self.event = self.create_event(self.family)
+        self.event = self.create_event(self.family, owner=self.user)
 
     def tearDown(self):
         """
@@ -171,33 +188,21 @@ class MockSuperUser:  # pylint: disable=too-few-public-methods
         return True
 
 
-class MockSuperUserBackend:  # pylint: disable=too-few-public-methods
-    """
-    Authentication backend to fake super user authentication
-
-        @override_settings(AUTHENTICATION_BACKENDS=["invite.tests.common.MockSuperUserBackend"])
-        def function(self):
-            self.client.force_login(MockSuperUser())
-            self.client.get('/admin/')
-    """
-    @staticmethod
-    def get_user(*_):
-        """Retrieve the mocked super user"""
-        return MockSuperUser()
-
-
 class MockRequest:  # pylint: disable=too-few-public-methods
     """Fake request"""
-    _instance = None
+    _default_user = MockSuperUser()  # type: User
+    _instance = None  # type: MockRequest
     method = 'GET'
 
-    def __init__(self):
+    def __init__(self, user=None):  # type: (MockRequest, Optional[User]) -> None
         """Initialize the user"""
-        self.user = MockSuperUser()
+        self.user = user or self._default_user
 
     @classmethod
-    def instance(cls):
+    def instance(cls, user=None):
         """Gest singleton instance"""
         if not cls._instance:
-            cls._instance = cls()
+            cls._instance = cls(user)
+        else:
+            cls._instance.user = user or cls._default_user
         return cls._instance

@@ -41,7 +41,7 @@ class TestShowMailTxt(TestMailTemplateMixin, TestEventMixin, TestCase):  # pylin
 
     def test_show_mail_without_template(self):
         """Test without template"""
-        event = self.create_event(self.family)
+        event = self.create_event(self.family, owner=self.user)
         get_user_model().objects.create_superuser('superuser', '', 'password')
         self.client.login(username='superuser', password='password')
 
@@ -83,7 +83,7 @@ class TestShowMailHtml(TestMailTemplateMixin, TestEventMixin, TestCase):  # pyli
 
     def test_show_mail_without_template(self):
         """Test without template"""
-        event = self.create_event(self.family)
+        event = self.create_event(self.family, owner=self.user)
         get_user_model().objects.create_superuser('superuser', '', 'password')
         self.client.login(username='superuser', password='password')
 
@@ -115,7 +115,7 @@ class TestShowMailHtml(TestMailTemplateMixin, TestEventMixin, TestCase):  # pyli
 
     def test_show_image_without_event(self):
         """Test get_joined_document view with an document not referenced in an event"""
-        event = self.create_event(self.family)
+        event = self.create_event(self.family, owner=self.user)
         MailTemplate.objects.create(event=event, text='', html='', subject='')
         get_user_model().objects.create_superuser('superuser', '', 'password')
         self.client.login(username='superuser', password='password')
@@ -127,7 +127,7 @@ class TestShowMailHtml(TestMailTemplateMixin, TestEventMixin, TestCase):  # pyli
 
     def test_show_image_invalid_event(self):
         """Test get_joined_document view with event without mail template"""
-        event = self.create_event(self.family)
+        event = self.create_event(self.family, owner=self.user)
         get_user_model().objects.create_superuser('superuser', '', 'password')
         self.client.login(username='superuser', password='password')
 
